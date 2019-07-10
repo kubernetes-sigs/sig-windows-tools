@@ -1,8 +1,3 @@
-#
-# Copyright 2019 (c) Microsoft Corporation.
-# Licensed under the MIT license.
-#
-
 $Global:BaseDir = "$env:ALLUSERSPROFILE\Kubernetes"
 $Global:GithubSDNRepository = 'Microsoft/SDN'
 $Global:GithubSDNBranch = 'master'
@@ -98,10 +93,10 @@ function InitHelper()
 function LoadGlobals()
 {
     $Global:BaseDir = $Global:ClusterConfiguration.Install.Destination
-    $Global:MasterUsername = $Global:ClusterConfiguration.Kubernetes.Master.Username
-    $Global:MasterIp = $Global:ClusterConfiguration.Kubernetes.Master.IpAddress
-    $Global:Token = $Global:ClusterConfiguration.Kubernetes.Master.KubeadmToken
-    $Global:CAHash = $Global:ClusterConfiguration.Kubernetes.Master.KubeadmCAHash
+    $Global:MasterUsername = $Global:ClusterConfiguration.Kubernetes.ControlPlane.Username
+    $Global:MasterIp = $Global:ClusterConfiguration.Kubernetes.ControlPlane.IpAddress
+    $Global:Token = $Global:ClusterConfiguration.Kubernetes.ControlPlane.KubeadmToken
+    $Global:CAHash = $Global:ClusterConfiguration.Kubernetes.ControlPlane.KubeadmCAHash
     $Global:PauseImage = $Global:ClusterConfiguration.Cri.Images.Pause
     $Global:NanoserverImage = $Global:ClusterConfiguration.Cri.Images.Nanoserver
     $Global:ServercoreImage = $Global:ClusterConfiguration.Cri.Images.ServerCore
@@ -871,12 +866,11 @@ function InstallKubelet()
                     -NodeIp $NodeIp -KubeletFeatureGates $KubeletFeatureGates `
                     -LogDir $logDir
 
-    #CreateService -ServiceName Kubelet -CommandLine $kubeletArgs -LogFile "$log"
-
     $kubeletBinPath = $((get-command kubelet.exe -ErrorAction Stop).Source)
 
-    #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage  --allow-privileged=true --enable-debugging-handlers  --cgroups-per-qos=false  --logtostderr=false  --network-plugin=cni --enforce-node-allocatable=`"`" --feature-gates=$KubeletFeatureGates"
-    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
+    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false  --logtostderr=false  --network-plugin=cni --enforce-node-allocatable=`"`" --feature-gates=$KubeletFeatureGates"
+    # Investigate why the below doesn't work, probably a syntax error with the args
+    #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
     kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"
     # Open firewall for 10250. Required for kubectl exec pod <>
     if (!(Get-NetFirewallRule -Name KubeletAllow10250 -ErrorAction SilentlyContinue ))

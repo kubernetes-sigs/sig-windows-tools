@@ -1,19 +1,13 @@
-#
-# Copyright 2019 (c) Microsoft Corporation.
-# Licensed under the MIT license.
-#
 Param(
     [parameter(Mandatory = $false,HelpMessage="Print the help")]
     [switch] $help,
-    [parameter(Mandatory = $false,HelpMessage="Initialize Windows Control Plane node (unsupported)")]
-    [switch] $init,
     [parameter(Mandatory = $false,HelpMessage="Install pre-requisites")]
-    [switch] $InstallPrerequisites,
-    [parameter(Mandatory = $false,HelpMessage="Join the windows node to the master")]
+    [switch] $install,
+    [parameter(Mandatory = $false,HelpMessage= "Join the windows node to the cluster")]
     [switch] $join,
-    [parameter(Mandatory = $false,HelpMessage="Reset this windows node and cleanup everything")]
+    [parameter(Mandatory = $false,HelpMessage="Reset and clean up this Windows worker node")]
     [switch] $reset,
-    [parameter(Mandatory = $false,HelpMessage="Path to input configuration json ")] 
+    [parameter(Mandatory = $false,HelpMessage="Path to input configuration JSON")] 
     $ConfigFile
 )
 
@@ -27,11 +21,10 @@ function Usage()
 		$bin [-help] [-init] [-join] [-reset]
 
 	Examples:
-        $bin -help                                                           print this help
-        $bin -InstallPrerequisites -ConfigFile kubecluster.json               Set up this Windows node to run containers
-        $bin -init -ConfigFile kubecluster.json                              joins the windows node to existing cluster control-plane (unsupported)
-        $bin -join -ConfigFile kubecluster.json                              joins the windows node to existing cluster
-        $bin -reset -ConfigFile kubecluster.json                             reset the kubernetes cluster
+        $bin -help                                                           Prints this help
+        $bin -install -ConfigFile kubecluster.json                           Sets up this Windows node to run containers
+        $bin -join -ConfigFile kubecluster.json                              Joins the Windows node to existing cluster
+        $bin -reset -ConfigFile kubecluster.json                             Resets and cleans up this Windows worker node
     "
 
     Write-Host $usage
@@ -58,9 +51,9 @@ function ReadKubeclusterConfig($ConfigFile)
             Release = "1.15.0";
         }
     }
-    if (!$Global:ClusterConfiguration.Kubernetes.Master)
+    if (!$Global:ClusterConfiguration.Kubernetes.ControlPlane)
     {
-        throw "Master information missing in the configuration file"
+        throw "Control-plane node information missing in the configuration file"
     }
 
     if (!$Global:ClusterConfiguration.Kubernetes.Network)
@@ -149,20 +142,13 @@ if ($help.IsPresent)
     exit
 }
 
-# Handle --init
-if ($init.IsPresent)
-{
-    Write-Host "Initalizing a Windows Control Plane node is unsupported"
-    exit
-}
-
-# Handle --InstallPrerequisites
-if ($InstallPrerequisites.IsPresent)
+# Handle --install
+if ($install.IsPresent)
 {
     InstallContainersRole
     if (!(Test-Path $env:HOMEDRIVE/$env:HOMEPATH/.ssh/id_rsa.pub))
     {
-        $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux Master [Y/n] - Default [Y] : "
+        $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux control-plane node [Y/n] - Default [Y] : "
         if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
         {
             ssh-keygen.exe
@@ -170,7 +156,7 @@ if ($InstallPrerequisites.IsPresent)
     }
 
     $pubKey = Get-Content $env:HOMEDRIVE/$env:HOMEPATH/.ssh/id_rsa.pub
-    Write-Host "Execute the below commands on the Linux Master($Global:MasterIp) to add this Windows Node's public key to its authorized keys"
+    Write-Host "Execute the below commands on the Linux control-plane node ($Global:MasterIp) to add this Windows node's public key to its authorized keys"
     
     Write-Host "touch ~/.ssh/authorized_keys"
     Write-Host "echo $pubKey >> ~/.ssh/authorized_keys"
@@ -197,30 +183,30 @@ if ($Join.IsPresent)
         DownloadKubeConfig -Master $Global:MasterIp -User $Global:MasterUsername
         if (!(KubeConfigExists))
         {
-            throw $kubeConfig + " does not exist. Cannot connect to the master cluster"
+            throw $kubeConfig + " does not exist. Cannot connect to the control-plane node"
         }
     }
 
-    # Validate connectivity with Master API Server
+    # Validate connectivity with the API Server
 
-    Write-Host "Trying to connect to the Kubernetes master"
+    Write-Host "Trying to connect to the Kubernetes control-plane node"
     try {
         ReadKubeClusterInfo 
     } catch {
-        throw "Unable to connect to the master. Reason [$_]"
+        throw "Unable to connect to the control-plane node. Reason [$_]"
     }
 
     $KubeDnsServiceIP = GetKubeDnsServiceIp
     $ClusterCIDR = GetClusterCidr
     $ServiceCIDR = GetServiceCidr
     
-    Write-Host "####################################"
-    Write-Host "Able to connect to the Master"
+    Write-Host "############################################"
+    Write-Host "Able to connect to the control-plane node"
     Write-Host "Discovered the following"
     Write-Host "Cluster CIDR    : $ClusterCIDR"
     Write-Host "Service CIDR    : $ServiceCIDR"
     Write-Host "DNS ServiceIp   : $KubeDnsServiceIP"
-    Write-Host "####################################"
+    Write-Host "############################################"
 
     #
     # Install Services & Start in the below order
