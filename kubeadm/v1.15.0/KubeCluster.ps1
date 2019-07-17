@@ -11,6 +11,13 @@ Param(
     $ConfigFile
 )
 
+# Handle --help
+if ($help.IsPresent)
+{
+    Usage
+    exit
+}
+
 function Usage()
 {
     $bin = $PSCommandPath 
@@ -134,13 +141,6 @@ if ($Global:NetworkPlugin -eq "vxlan")
     $Global:NetworkName = "vxlan0"
 }
 ######################################################################################################################
-
-# Handle --help
-if ($help.IsPresent)
-{
-    Usage
-    exit
-}
 
 # Handle --install
 if ($install.IsPresent)
