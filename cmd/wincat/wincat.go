@@ -6,23 +6,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 )
-
-type Result struct {
-	bytes uint64
-}
-
-func copyStream(r io.ReadCloser, w io.WriteCloser, name string, done chan Result) {
-	defer func() {
-		r.Close()
-		w.Close()
-	}()
-	n, err := io.Copy(w, r)
-	if err != nil {
-		log.Printf("error while copying stream %s: %s\n", name, err)
-	}
-	done <- Result{bytes: uint64(n)}
-}
 
 func main() {
 	if len(os.Args) != 3 {
@@ -31,16 +16,45 @@ func main() {
 	host := os.Args[1]
 	port := os.Args[2]
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%s", host, port))
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("Failed to connect to %s:%s because %s\n", host, port, err))
+		log.Fatalf("Failed to resolve TCP addr %v %v", host, port)
 	}
-	results := make(chan Result)
-	go copyStream(conn, os.Stdout, "stdout", results)
-	go copyStream(os.Stdin, conn, "stdin", results)
 
-	result := <-results
-	log.Printf("[%s]: Connection closed by remote peer, %d bytes have been received\n", conn.RemoteAddr(), result.bytes)
-	result = <-results
-	log.Printf("[%s]: Local peer has been stopped, %d bytes has been sent\n", conn.RemoteAddr(), result.bytes)
+	conn, err := net.DialTCP("tcp", nil, addr)
+	if err != nil {
+		log.Fatalf("Failed to connect to %s:%s because %s", host, port, err)
+	}
+	defer conn.Close()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer func() {
+			os.Stdout.Close()
+			os.Stdin.Close()
+			conn.CloseRead()
+			wg.Done()
+		}()
+
+		_, err := io.Copy(os.Stdout, conn)
+		if err != nil {
+			log.Printf("error while copying stream to stdout: %v", err)
+		}
+	}()
+
+	go func() {
+		defer func() {
+			conn.CloseWrite()
+			wg.Done()
+		}()
+
+		_, err := io.Copy(conn, os.Stdin)
+		if err != nil {
+			log.Printf("error while copying stream from stdin: %v", err)
+		}
+	}()
+
+	wg.Wait()
 }
