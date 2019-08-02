@@ -11,13 +11,6 @@ Param(
     $ConfigFile
 )
 
-# Handle --help
-if ($help.IsPresent)
-{
-    Usage
-    exit
-}
-
 function Usage()
 {
     $bin = $PSCommandPath 
@@ -35,6 +28,13 @@ function Usage()
     "
 
     Write-Host $usage
+}
+
+# Handle --help
+if ($help.IsPresent)
+{
+    Usage
+    exit
 }
 
 function ReadKubeclusterConfig($ConfigFile)
