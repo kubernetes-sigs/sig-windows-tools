@@ -87,7 +87,6 @@ function InitHelper()
     LoadGlobals
     ValidateConfig
     CreateDirectory $(GetLogDir)
-    Install-7Zip
 }
 
 function LoadGlobals()
@@ -169,68 +168,7 @@ function PrintConfig()
     ######################################################################################################################
 }
 
-function Cleanup()
-{
-    
-}
-
-
 ###################################################################################################
-
-function Expand-GZip($infile, $outfile = ($infile -replace '\.gz$',''))
-{
-    # From https://social.technet.microsoft.com/Forums/en-US/5aa53fef-5229-4313-a035-8b3a38ab93f5/unzip-gz-files-using-powershell?forum=winserverpowershell
-    $input = New-Object System.IO.FileStream $inFile, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read)
-    $output = New-Object System.IO.FileStream $outFile, ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
-    $gzipStream = New-Object System.IO.Compression.GzipStream $input, ([IO.Compression.CompressionMode]::Decompress)
-    try {
-        if (!$input -or !$output -or !$gzipStream)
-        {
-            throw "Failed to Unzip the archive"
-        }
-        $buffer = New-Object byte[](1024)
-        while($true){
-            $read = $gzipstream.Read($buffer, 0, 1024)
-            if ($read -le 0){break}
-            $output.Write($buffer, 0, $read)
-        }
-    } finally {
-        $gzipStream.Close()
-        $output.Close()
-        $input.Close()
-    }
-}
-
-function Install-7Zip()
-{
-    # ask to install 7zip, if it's not already installed
-    if (-not (Get-Command Expand-7Zip -ErrorAction Ignore)) {
-        Install-Package -Scope CurrentUser -Force 7Zip4PowerShell -Verbose
-        if(-not $?) {
-            Write-Error "Failed to install package"
-            Exit 1
-        }
-    }
-}
-
-function DownloadAndExtractTarGz($url, $dstPath)
-{
-    $tmpTarGz = New-TemporaryFile | Rename-Item -NewName { $_ -replace 'tmp$', 'tar.gz' } -PassThru
-    $tmpTar = New-TemporaryFile | Rename-Item -NewName { $_ -replace 'tmp$', 'tar' } -PassThru
-    DownloadFile -Url $url -Destination $tmpTarGz.FullName -Force
-    #Invoke-WebRequest $url -o $tmpTarGz.FullName
-    Expand-GZip $tmpTarGz.FullName $tmpTar.FullName
-    Expand-7Zip $tmpTar.FullName $dstPath
-    Remove-Item $tmpTarGz.FullName,$tmpTar.FullName
-}
-
-function DownloadAndExtractZip($url, $dstPath)
-{
-    $tmpZip = New-TemporaryFile | Rename-Item -NewName { $_ -replace 'tmp$', 'zip' } -PassThru
-    Invoke-WebRequest $url -o $tmpZip.FullName
-    Expand-Archive $tmpZip.FullName $dstPath
-    Remove-Item $tmpZip.FullName
-}
 
 function DownloadFile()
 {
@@ -345,7 +283,6 @@ function DownloadCniBinaries($NetworkMode, $CniPath)
 {
     Write-Host "Downloading CNI binaries for $NetworkMode to $CniPath"
     CreateDirectory $CniPath\config
-    DownloadFile -Url "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/$NetworkMode/cni/config/cni.conf" -Destination $CniPath\config\cni.conf
     DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/l2bridge/cni/flannel.exe" -Destination $CniPath\flannel.exe
     DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/l2bridge/cni/host-local.exe" -Destination $CniPath\host-local.exe
 
@@ -582,7 +519,6 @@ function
 Update-CNIConfig
 {
     Param(
-        $CNIConfig,
         $clusterCIDR,
         $KubeDnsServiceIP,
         $serviceCIDR,
@@ -615,8 +551,7 @@ Update-CNIConfig
                 ]
               }
           }'
-              #Add-Content -Path $CNIConfig -Value $jsonSampleConfig
-          
+
               $configJson =  ConvertFrom-Json $jsonSampleConfig
               $configJson.name = $NetworkName
               $configJson.delegate.type = "win-bridge"
@@ -652,7 +587,6 @@ Update-CNIConfig
                 ]
               }
           }'
-              #Add-Content -Path $CNIConfig -Value $jsonSampleConfig
           
               $configJson =  ConvertFrom-Json $jsonSampleConfig
               $configJson.name = $NetworkName
@@ -868,7 +802,7 @@ function InstallKubelet()
 
     $kubeletBinPath = $((get-command kubelet.exe -ErrorAction Stop).Source)
 
-    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false  --logtostderr=false  --network-plugin=cni --enforce-node-allocatable=`"`" --feature-gates=$KubeletFeatureGates"
+    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false  --logtostderr=false --resolv=`"`" --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
     kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"
@@ -878,7 +812,6 @@ function InstallKubelet()
         New-NetFirewallRule -Name KubeletAllow10250 -Description "Kubelet Allow 10250" -Action Allow -LocalPort 10250 -Enabled True -DisplayName "KubeletAllow10250" -Protocol TCP -ErrorAction Stop
     }
     if (!(IsNodeRegistered)) {
-        Write-Host "$(IsNodeRegistered)"
         throw "Kubelet failed to bootstrap"
     }
 }
@@ -944,21 +877,6 @@ function StartKubeProxy()
     {
         Start-Service Kubeproxy -ErrorAction Stop
         WaitForServiceRunningState -ServiceName Kubeproxy  -TimeoutSeconds 5
-    }
-}
-
-function RunLocally([string[]]$command)
-{
-    Write-Host "Starting $($command | Out-String)"
-    $binary = ($command | Select -First 1)
-    $arguments = ($command | select -Skip 1)
-    if ($arguments)
-    {
-        Start-Process -FilePath $binary  -ArgumentList $arguments -NoNewWindow
-    }
-    else
-    {
-        Start-Process -FilePath $binary  -NoNewWindow
     }
 }
 
@@ -1198,20 +1116,6 @@ function InstallDockerD()
     }
 }
 
-function UninstallDockerD()
-{
-    # If docker was already installed, do not uninstall it
-    if ($Global:Configuration["InstallDocker"] -eq $true)
-    {
-        RemoveService Docker
-        Remove-Item $env:ProgramFiles\Docker
-        # For persistent use after a reboot
-        $existingMachinePath = [Environment]::GetEnvironmentVariable("Path",[System.EnvironmentVariableTarget]::Machine)
-        $existingMachinePath = $existingMachinePath.Replace($env:ProgramFiles+ '\Docker;', "")
-        [Environment]::SetEnvironmentVariable("Path", $existingMachinePath, [EnvironmentVariableTarget]::Machine)
-    }
-}
-
 function InstallDockerImages()
 {
     if (!(docker images $Global:NanoserverImage -q))
@@ -1263,7 +1167,7 @@ function InstallKubernetesBinaries()
     $env:KUBECONFIG = $(GetKubeConfig)
     [Environment]::SetEnvironmentVariable("KUBECONFIG", $(GetKubeConfig), [EnvironmentVariableTarget]::Machine)
 
-    $Release = "1.14"
+    $Release = "1.15"
     if ($Source.Release)
     {
         $Release = $Source.Release
@@ -1273,8 +1177,8 @@ function InstallKubernetesBinaries()
     {
         $Url = $Source.Url
     }
-
-    DownloadAndExtractTarGz -url $Url -dstPath $DestinationPath
+    DownloadFile -Url  $Url -Destination $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz
+    tar -zxvf $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz -C $DestinationPath
 }
 
 function UninstallKubernetesBinaries()
@@ -1290,14 +1194,6 @@ function UninstallKubernetesBinaries()
     # For Persistent across reboot
     [Environment]::SetEnvironmentVariable("Path", $existingPath, [EnvironmentVariableTarget]::Machine)
     Remove-Item $DestinationPath -Force -ErrorAction SilentlyContinue
-}
-
-function DownloadWinCniBinaries()
-{
-    Write-Host "Downloading CNI binaries"
-    md $Global:BaseDir\cni\config -ErrorAction Ignore
-
-    DownloadFile -Url "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/windows/cni/wincni.exe" -Destination $BaseDir\cni\wincni.exe
 }
 
 function InstallContainersRole()
@@ -1379,21 +1275,6 @@ function InstallCRI($cri)
     }
 }
 
-function UninstallCRI($cri)
-{
-    switch ($cri)
-    {
-        "dockerd" {
-            UninstallDockerD
-            break
-        }
-
-        "containerd" {
-            break
-        }
-    }
-}
-
 function InstallCNI($cni, $NetworkMode, $ManagementIp, $CniPath, $InterfaceName)
 {
     CreateDirectory $CniPath
@@ -1407,7 +1288,7 @@ function InstallCNI($cni, $NetworkMode, $ManagementIp, $CniPath, $InterfaceName)
             DownloadFlannelBinaries -Destination $Global:BaseDir
             DownloadCniBinaries -NetworkMode $NetworkMode -CniPath $CniPath
             InstallFlannelD -Destination $Global:BaseDir -InterfaceIpAddress $ManagementIp
-            Update-CNIConfig -CNIConfig (GetCniConfig) `
+            Update-CNIConfig  `
                 -ClusterCIDR (GetClusterCidr) -KubeDnsServiceIP (GetKubeDnsServiceIp) `
                 -ServiceCidr (GetServiceCidr) -InterfaceName $InterfaceName `
                 -NetworkName $Global:NetworkName -NetworkMode $Global:NetworkMode
@@ -1465,11 +1346,8 @@ Export-ModuleMember KillProcessByName
 Export-ModuleMember AllowFirewall
 Export-ModuleMember RemoveFirewall
 Export-ModuleMember CleanupContainers
-Export-ModuleMember Expand-GZip
 Export-ModuleMember DownloadAndExtractTarGz
-Export-ModuleMember DownloadAndExtractZip
 Export-ModuleMember Assert-FileExists
-Export-ModuleMember RunLocally
 Export-ModuleMember StartKubelet
 Export-ModuleMember StartFlanneld
 Export-ModuleMember StartKubeproxy
@@ -1477,9 +1355,7 @@ Export-ModuleMember CreateService
 Export-ModuleMember RemoveService
 Export-ModuleMember InstallKubernetesBinaries
 Export-ModuleMember UninstallKubernetesBinaries
-Export-ModuleMember DownloadWinCniBinaries
 Export-ModuleMember InstallDockerD
-Export-ModuleMember UninstallDockerD
 Export-ModuleMember InstallDockerImages
 Export-ModuleMember InstallPauseImage
 Export-ModuleMember InstallContainersRole
@@ -1495,14 +1371,12 @@ Export-ModuleMember UninstallKubelet
 Export-ModuleMember InstallCNI
 Export-ModuleMember InstallCRI
 Export-ModuleMember UninstallCNI
-Export-ModuleMember UninstallCRI
 Export-ModuleMember InitHelper
 Export-ModuleMember GetKubeConfig
 Export-ModuleMember DownloadKubeConfig
 Export-ModuleMember GetCniPath
 Export-ModuleMember GetCniConfigPath
 Export-ModuleMember Get-InterfaceIpAddress
-Export-ModuleMember Install-7Zip
 Export-ModuleMember GetLogDir
 Export-ModuleMember HasKubeClusterConfig
 Export-ModuleMember WriteKubeClusterConfig
@@ -1513,3 +1387,4 @@ Export-ModuleMember GetFileContent
 Export-ModuleMember PrintConfig
 Export-ModuleMember CleanupPolicyList
 Export-ModuleMember CreateExternalNetwork
+Export-ModuleMember RemoveExternalNetwork

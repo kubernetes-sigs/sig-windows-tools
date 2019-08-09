@@ -104,24 +104,13 @@ function ReadKubeclusterConfig($ConfigFile)
         }
     }
 }
-function LoadPsm1($Path)
-{
-    $tmpPath = [io.Path]::Combine([System.IO.Path]::GetTempPath(), [io.path]::GetFileName($Path))
-    Invoke-WebRequest $Path -o $tmpPath
-    Import-Module $tmpPath  -DisableNameChecking
-    Remove-Item $tmpPath
-}
+
 ###############################################################################################
 # Download pre-req scripts
 
-$helperPath = "https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/kubeadm/v1.15.0/KubeClusterHelper.psm1"
-$helperDestination = "$PSScriptRoot\KubeClusterHelper.psm1" 
-Invoke-WebRequest $helperPath -o $helperDestination
-Import-Module $helperDestination
-
 $hnsPath = "https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/windows/hns.psm1"
 $hnsDestination = "$PSScriptRoot\hns.psm1" 
-Invoke-WebRequest $hnsPath -o $hnsDestination
+DownloadFile -Url $hnsPath -Destination $hnsDestination
 Import-Module $hnsDestination
 
 
@@ -270,4 +259,5 @@ elseif ($Reset.IsPresent)
 
     Remove-Item $Global:BaseDir -ErrorAction SilentlyContinue
     Remove-Item $env:HOMEDRIVE\$env:HOMEPATH\.kube -ErrorAction SilentlyContinue
+    Remove-ExternalNetwork
 }
