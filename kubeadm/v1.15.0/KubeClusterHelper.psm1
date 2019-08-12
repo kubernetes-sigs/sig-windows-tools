@@ -43,11 +43,6 @@ function GetCniConfigPath()
     return [io.Path]::Combine($(GetCniPath), "config");
 }
 
-function GetCniConfig()
-{
-    return [io.Path]::Combine($(GetCniConfigPath), "cni.conf");
-}
-
 function GetKubeClusterConfig()
 {
     return [io.Path]::Combine($Global:BaseDir, ".kubeclusterconfig")
@@ -464,15 +459,6 @@ function Get-MgmtSubnet
     return "$mgmtSubnet/$(ConvertTo-MaskLength $mask)"
 }
 
-function Get-MgmtDefaultGatewayAddress
-{
-    Param (
-        [Parameter(Mandatory=$false)] [String] $InterfaceName = "Ethernet"
-    )
-    $na = Get-NetAdapter | ? Name -Like "vEthernet ($InterfaceName*"
-    return  (Get-NetRoute -InterfaceAlias $na.ifAlias -DestinationPrefix "0.0.0.0/0").NextHop
-}
-
 function CreateDirectory($Path)
 {
     if (!(Test-Path $Path))
@@ -609,22 +595,6 @@ Update-CNIConfig
     Write-Host "Generated CNI Config [$outJson]"
 
     Add-Content -Path $CNIConfig -Value $outJson
-}
-
-
-function KillProcessByName($ProcessName)
-{
-    taskkill /im $ProcessName /f
-}
-
-function AllowFirewall($ProcessName)
-{
-    New-NetFirewallRule -DisplayName $ProcessName -Direction Inbound -Program $ProcessName -Action Allow
-}
-
-function RemoveFirewall($ProcessName)
-{
-    Remove-NetFirewallRule -DisplayName $ProcessName -ErrorAction SilentlyContinue
 }
 
 function CleanupContainers()
@@ -1202,7 +1172,10 @@ function InstallContainersRole()
     if (!$feature.Installed)
     {
         Install-WindowsFeature -Name Containers -IncludeAllSubFeature
+        return $true
     }
+
+    return $false
 }
 
 function ReadKubeClusterInfo()
@@ -1338,13 +1311,9 @@ Export-ModuleMember Get-PodCIDR
 Export-ModuleMember Get-PodCIDRs
 Export-ModuleMember Get-PodEndpointGateway
 Export-ModuleMember Get-PodGateway
-Export-ModuleMember Get-MgmtDefaultGatewayAddress
 Export-ModuleMember CreateDirectory
 Export-ModuleMember Update-CNIConfig
 Export-ModuleMember Update-NetConfig
-Export-ModuleMember KillProcessByName
-Export-ModuleMember AllowFirewall
-Export-ModuleMember RemoveFirewall
 Export-ModuleMember CleanupContainers
 Export-ModuleMember DownloadAndExtractTarGz
 Export-ModuleMember Assert-FileExists

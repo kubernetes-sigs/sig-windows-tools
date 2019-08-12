@@ -18,7 +18,7 @@ function Usage()
 
     $usage = "
     Usage: 
-		$bin [-help] [-init] [-join] [-reset]
+		$bin [-help] [-install] [-join] [-reset]
 
 	Examples:
         $bin -help                                                           Prints this help
@@ -108,6 +108,7 @@ function ReadKubeclusterConfig($ConfigFile)
 ###############################################################################################
 # Download pre-req scripts
 
+Import-Module "$PSScriptRoot\KubeClusterHelper.psm1"
 $hnsPath = "https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/windows/hns.psm1"
 $hnsDestination = "$PSScriptRoot\hns.psm1" 
 DownloadFile -Url $hnsPath -Destination $hnsDestination
@@ -186,10 +187,18 @@ Restart-And-Run()
 
 if ($install.IsPresent)
 {
-    InstallContainersRole
+    if (InstallContainersRole)
+    {
+        $res = Read-Host "Continue to Reboot the host [Y/n] - Default [Y]"
+        if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
+        {
+            Restart-And-Run
+        }
+    }
+
     if (!(Test-Path $env:HOMEDRIVE/$env:HOMEPATH/.ssh/id_rsa.pub))
     {
-        $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux control-plane node [Y/n] - Default [Y] : "
+        $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux control-plane node [Y/n] - Default [Y]"
         if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
         {
             ssh-keygen.exe
@@ -202,14 +211,10 @@ if ($install.IsPresent)
     Write-Host "touch ~/.ssh/authorized_keys"
     Write-Host "echo $pubKey >> ~/.ssh/authorized_keys"
 
-    $res = Read-Host "Continue to Reboot the host [Y/n] - Default [Y] : "
-    if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
-    {
-        Restart-And-Run
-    }
-
     InstallCRI $Global:Cri
     InstallKubernetesBinaries -Destination  $Global:BaseDir -Source $Global:ClusterConfiguration.Kubernetes.Source
+
+    Write-Host "Please close this shell and open a new one to join this node to the cluster."
 
     exit
 }
