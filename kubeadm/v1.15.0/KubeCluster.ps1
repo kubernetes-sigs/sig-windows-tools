@@ -132,6 +132,58 @@ if ($Global:NetworkPlugin -eq "vxlan")
 ######################################################################################################################
 
 # Handle --install
+function
+Restart-And-Run()
+{
+    Write-Output "Restart is required; restarting now..."
+
+    $argList = $script:MyInvocation.Line.replace($script:MyInvocation.InvocationName, "")
+
+    #
+    # Update .\ to the invocation directory for the bootstrap
+    #
+    $scriptPath = $script:MyInvocation.MyCommand.Path
+
+    $argList = $argList -replace "\.\\", "$pwd\"
+
+    if ((Split-Path -Parent -Path $scriptPath) -ne $pwd)
+    {
+        $sourceScriptPath = $scriptPath
+        $scriptPath = "$pwd\$($script:MyInvocation.MyCommand.Name)"
+
+        Copy-Item $sourceScriptPath $scriptPath
+    }
+
+    Write-Output "Creating scheduled task action ($scriptPath $argList)..."
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $scriptPath $argList"
+
+    Write-Output "Creating scheduled task trigger..."
+    $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+    Write-Output "Registering script to re-run at next user logon..."
+    Register-ScheduledTask -TaskName $global:BootstrapTask -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
+
+    try
+    {
+        if ($Force)
+        {
+            Restart-Computer -Force
+        }
+        else
+        {
+            Restart-Computer
+        }
+    }
+    catch
+    {
+        Write-Error $_
+
+        Write-Output "Please restart your computer manually to continue script execution."
+    }
+
+    exit
+}
+
 if ($install.IsPresent)
 {
     InstallContainersRole
@@ -153,7 +205,7 @@ if ($install.IsPresent)
     $res = Read-Host "Continue to Reboot the host [Y/n] - Default [Y] : "
     if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
     {
-        Restart-Computer -Force
+        Restart-And-Run
     }
 
     InstallCRI $Global:Cri
@@ -161,6 +213,7 @@ if ($install.IsPresent)
 
     exit
 }
+
 
 # Handle -Join
 if ($Join.IsPresent)
