@@ -587,6 +587,7 @@ Update-CNIConfig
               $configJson.delegate.Policies[1].Value.DestinationPrefix  = $serviceCIDR
     }
     
+    $CNIConfig = [io.Path]::Combine($(GetCniConfigPath), "cni.conf");
     if (Test-Path $CNIConfig) {
         Clear-Content -Path $CNIConfig
     }
@@ -772,7 +773,7 @@ function InstallKubelet()
 
     $kubeletBinPath = $((get-command kubelet.exe -ErrorAction Stop).Source)
 
-    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false  --logtostderr=false --resolv=`"`" --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
+    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
     kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"

@@ -317,5 +317,5 @@ elseif ($Reset.IsPresent)
 
     Remove-Item $Global:BaseDir -ErrorAction SilentlyContinue
     Remove-Item $env:HOMEDRIVE\$env:HOMEPATH\.kube -ErrorAction SilentlyContinue
-    Remove-ExternalNetwork
+    RemoveExternalNetwork
 }
