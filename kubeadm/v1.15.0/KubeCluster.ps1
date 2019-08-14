@@ -162,7 +162,7 @@ Restart-And-Run()
     $trigger = New-ScheduledTaskTrigger -AtLogOn
 
     Write-Output "Registering script to re-run at next user logon..."
-    Register-ScheduledTask -TaskName $global:BootstrapTask -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
+    Register-ScheduledTask -TaskName "ContainerBootstrap" -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
 
     try
     {
