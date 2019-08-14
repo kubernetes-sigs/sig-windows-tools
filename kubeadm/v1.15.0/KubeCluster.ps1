@@ -189,6 +189,9 @@ if ($install.IsPresent)
         }
     }
 
+    InstallCRI $Global:Cri
+    InstallKubernetesBinaries -Destination  $Global:BaseDir -Source $Global:ClusterConfiguration.Kubernetes.Source
+
     if (!(Test-Path $env:HOMEDRIVE/$env:HOMEPATH/.ssh/id_rsa.pub))
     {
         $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux control-plane node [Y/n] - Default [Y]"
@@ -203,10 +206,6 @@ if ($install.IsPresent)
     
     Write-Host "touch ~/.ssh/authorized_keys"
     Write-Host "echo $pubKey >> ~/.ssh/authorized_keys"
-
-    InstallCRI $Global:Cri
-    InstallKubernetesBinaries -Destination  $Global:BaseDir -Source $Global:ClusterConfiguration.Kubernetes.Source
-
     Write-Host "Please close this shell and open a new one to join this node to the cluster."
 
     exit
