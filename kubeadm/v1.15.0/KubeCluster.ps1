@@ -166,14 +166,7 @@ Restart-And-Run()
 
     try
     {
-        if ($Force)
-        {
-            Restart-Computer -Force
-        }
-        else
-        {
-            Restart-Computer
-        }
+        Restart-Computer  
     }
     catch
     {
