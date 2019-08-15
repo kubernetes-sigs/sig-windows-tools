@@ -277,18 +277,12 @@ function WaitForServiceRunningState($ServiceName, $TimeoutSeconds)
 function DownloadCniBinaries($NetworkMode, $CniPath)
 {
     Write-Host "Downloading CNI binaries for $NetworkMode to $CniPath"
+    
+    CreateDirectory $CniPath
     CreateDirectory $CniPath\config
-    DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/l2bridge/cni/flannel.exe" -Destination $CniPath\flannel.exe
-    DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/l2bridge/cni/host-local.exe" -Destination $CniPath\host-local.exe
-
-    if ($NetworkMode -eq "l2bridge")
-    {
-        DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/l2bridge/cni/win-bridge.exe" -Destination $CniPath\win-bridge.exe
-    }
-    elseif ($NetworkMode -eq "overlay")
-    {
-        DownloadFile -Url  "https://github.com/$Global:GithubSDNRepository/raw/$Global:GithubSDNBranch/Kubernetes/flannel/overlay/cni/win-overlay.exe" -Destination $CniPath\win-overlay.exe
-    }
+    DownloadFlannelBinaries -Destination $Global:BaseDir
+    DownloadFile -Url https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-windows-amd64-v0.8.2.tgz -Destination $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz
+    tar -zxvf $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz -C $CniPath
 }
 
 function DownloadFlannelBinaries()
@@ -1251,7 +1245,7 @@ function InstallCRI($cri)
 
 function InstallCNI($cni, $NetworkMode, $ManagementIp, $CniPath, $InterfaceName)
 {
-    CreateDirectory $CniPath
+   
     switch ($Cni)
     {
         "kubenet" {
@@ -1259,8 +1253,6 @@ function InstallCNI($cni, $NetworkMode, $ManagementIp, $CniPath, $InterfaceName)
         }
     
         "flannel" {
-            DownloadFlannelBinaries -Destination $Global:BaseDir
-            DownloadCniBinaries -NetworkMode $NetworkMode -CniPath $CniPath
             InstallFlannelD -Destination $Global:BaseDir -InterfaceIpAddress $ManagementIp
             Update-CNIConfig  `
                 -ClusterCIDR (GetClusterCidr) -KubeDnsServiceIP (GetKubeDnsServiceIp) `
@@ -1358,3 +1350,4 @@ Export-ModuleMember PrintConfig
 Export-ModuleMember CleanupPolicyList
 Export-ModuleMember CreateExternalNetwork
 Export-ModuleMember RemoveExternalNetwork
+Export-ModuleMember DownloadCniBinaries

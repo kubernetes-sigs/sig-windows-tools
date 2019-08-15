@@ -191,6 +191,7 @@ if ($install.IsPresent)
 
     InstallCRI $Global:Cri
     InstallKubernetesBinaries -Destination  $Global:BaseDir -Source $Global:ClusterConfiguration.Kubernetes.Source
+    DownloadCniBinaries -NetworkMode $Global:NetworkMode -CniPath $(GetCniPath)
 
     if (!(Test-Path $env:HOMEDRIVE/$env:HOMEPATH/.ssh/id_rsa.pub))
     {
