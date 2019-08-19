@@ -1068,11 +1068,9 @@ function InstallDockerD()
 
     $cmd = get-command docker.exe -ErrorAction SilentlyContinue
     if (!$cmd)
-    {
-        $dockerVersion = $Version
-        DownloadFile  "https://master.dockerproject.org/windows/x86_64/${dockerVersion}.zip" -Destination "$env:TEMP\$dockerVersion.zip" 
-        Expand-Archive -Path "$env:TEMP\$dockerVersion.zip" -DestinationPath $env:ProgramFiles -Force
-        dockerd --register-service
+    {      
+        Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
+        Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion 18.09
         Start-Service Docker -ErrorAction Stop
         $Global:Configuration += @{
             InstallDocker = $true;
@@ -1197,7 +1195,7 @@ function GetKubeDnsServiceIp()
 
 function GetAPIServerEndpoint() {
     $endpoints = ConvertFrom-Json $(kubectl.exe get endpoints --all-namespaces -o json | Out-String)
-    $endpoints.Items | foreach { $i = $_; if ($i.Metadata.Name -match "kubernetes") { return "$($i.subsets.addresses.ip):$($i.subsets.ports.port)" } }
+    $endpoints.Items | foreach { $i = $_; if ($i.Metadata.Name -eq "kubernetes") { return "$($i.subsets.addresses.ip):$($i.subsets.ports.port)" } }
 }
 
 function GetKubeNodes()
