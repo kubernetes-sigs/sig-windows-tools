@@ -1,22 +1,27 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: sidecar-injector-webhook-cfg
+  name: lcow-injector-cfg
   labels:
-    app: sidecar-injector
+    app: lcow-injector
+  namespace: injector
 webhooks:
-  - name: sidecar-injector.morven.me
+  - name: lcow-injector.sachinmsft.me
+    failurePolicy: Fail
     clientConfig:
       service:
-        name: sidecar-injector-webhook-svc
-        namespace: default
+        name: lcow-injector-webhook-svc
+        namespace: injector
         path: "/mutate"
       caBundle: ${CA_BUNDLE}
+    namespaceSelector:
+      matchExpressions:
+        - key: name
+          operator: NotIn
+          values:
+          - injector
     rules:
       - operations: [ "CREATE" ]
         apiGroups: [""]
         apiVersions: ["v1"]
-        resources: ["pods"]
-    namespaceSelector:
-      matchLabels:
-        sidecar-injector: enabled
+        resources: ["pods","deployments","replicasets","statefulsets"]

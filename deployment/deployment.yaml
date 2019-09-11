@@ -1,22 +1,22 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sidecar-injector-webhook-deployment
+  name: lcow-injector-webhook-deployment
   labels:
-    app: sidecar-injector
+    app: lcow-injector
+  namespace: injector
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: sidecar-injector
+        app: lcow-injector
     spec:
       containers:
-        - name: sidecar-injector
-          image: morvencao/sidecar-injector:v1
+        - name: lcow-injector
+          image: nickwork.azurecr.io/linux-fixer:windows
           imagePullPolicy: IfNotPresent
           args:
-            - -sidecarCfgFile=/etc/webhook/config/sidecarconfig.yaml
             - -tlsCertFile=/etc/webhook/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/certs/key.pem
             - -alsologtostderr
@@ -26,12 +26,11 @@ spec:
             - name: webhook-certs
               mountPath: /etc/webhook/certs
               readOnly: true
-            - name: webhook-config
-              mountPath: /etc/webhook/config
+      nodeSelector:
+        'beta.kubernetes.io/os': windows
       volumes:
         - name: webhook-certs
           secret:
-            secretName: sidecar-injector-webhook-certs
-        - name: webhook-config
-          configMap:
-            name: sidecar-injector-webhook-configmap
+            secretName: lcow-injector-webhook-certs
+      imagePullSecrets:
+      - name: regcred
