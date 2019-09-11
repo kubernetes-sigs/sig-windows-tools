@@ -1,6 +1,36 @@
-# Kubernetes Mutating Admission Webhook for sidecar injection
+# Linux Node Selector Adder
 
-This tutoral shows how to build and deploy a [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) that injects a nginx sidecar container into pod prior to persistence of the object.
+The goal of this project is to end failures of Linux apps due to being scheduled on a windows worker node.
+
+The scheduler in Kubernetes does not know what OS your application is. It is incumbent on the developer to restrict their apps to Linux or Windows nodes. 
+
+## More Context
+
+There are a few problems that exist with this restriction. The best practices on how to restrict an app to a Linux or Windows worker node may change. And many Linux developers do not test with or consider the windows ecosystem.  As such most applications require either patches (as their configuration is buried in code) or manual configuration to restrict it to Linux nodes. Since there is a lot of useful software that exhibits these problems it means that either when a Windows node is added to the cluster Linux apps start failing, or people are hesitant to add this software to mixed mode clusters because it is hard. We will fix all this by seamlessly auto patching incorrect configuration. 
+
+### Don't windows apps require fixes
+
+Currently no, all windows apps were written with knowledge of Linux and restrict themselves.
+
+# Status
+
+Currently this code was accomplished in a hackathon. There are numerous known deficiencies, and a few unknown ones.
+
+
+## TODO
+
+* create helm chart to deploy app
+* auto setup certificates for webhook
+* renew certificates for webhook before they expire
+* push image for mutating webhook
+* multiarch image
+* mutate replicas, jobs, daemonsets, ... such that when scheduling the pod the hook doesn't need to get invoked
+* option to delete existing pods in cluster that fail checks such that mutator will get invoked when rescheduled and clean up existing broken apps
+
+
+# Kubernetes Mutating Admission Webhook for lcow injection
+
+Forked from mutating admission webhook info at https://github.com/morvencao/kube-mutating-webhook-tutorial
 
 ## Prerequisites
 
@@ -14,6 +44,8 @@ admissionregistration.k8s.io/v1beta1
 ```
 
 In addition, the `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission controllers should be added and listed in the correct order in the admission-control flag of kube-apiserver.
+
+**This code currently uses the node selector `beta.kubernetes.io/os` in 1.18 this needs to change to `kubernetes.io/os` (available since 1.14)**
 
 ## Build
 
@@ -32,12 +64,13 @@ go get -u github.com/golang/dep/cmd/dep
 
 ## Deploy
 
-1. Create a signed cert/key pair and store it in a Kubernetes `secret` that will be consumed by sidecar deployment
+1. Create a signed cert/key pair and store it in a Kubernetes `secret` that will be consumed lcow deployment
 ```
+kubectl apply -f ./deployment/namespace.yaml
 ./deployment/webhook-create-signed-cert.sh \
-    --service sidecar-injector-webhook-svc \
-    --secret sidecar-injector-webhook-certs \
-    --namespace default
+    --service lcow-injector-webhook-svc \
+    --secret lcow-injector-webhook-certs \
+    --namespace injector
 ```
 
 2. Patch the `MutatingWebhookConfiguration` by set `caBundle` with correct value from Kubernetes cluster
@@ -49,62 +82,27 @@ cat deployment/mutatingwebhook.yaml | \
 
 3. Deploy resources
 ```
-kubectl create -f deployment/nginxconfigmap.yaml
-kubectl create -f deployment/configmap.yaml
-kubectl create -f deployment/deployment.yaml
-kubectl create -f deployment/service.yaml
-kubectl create -f deployment/mutatingwebhook-ca-bundle.yaml
+kubectl apply -f deployment/deployment.yaml
+kubectl apply -f deployment/service.yaml
+kubectl apply -f deployment/mutatingwebhook-ca-bundle.yaml
+```
+
+4. Delete resources
+```
+kubectl delete -f deployment/deployment.yaml
+kubectl delete -f deployment/service.yaml
+kubectl delete -f deployment/mutatingwebhook-ca-bundle.yaml
+kubectl delete -f deployment/namespace.yaml
 ```
 
 ## Verify
 
-1. The sidecar inject webhook should be running
+1. The webhook should be running
 ```
 [root@mstnode ~]# kubectl get pods
 NAME                                                  READY     STATUS    RESTARTS   AGE
-sidecar-injector-webhook-deployment-bbb689d69-882dd   1/1       Running   0          5m
+lcow-injector-webhook-deployment-bbb689d69-882dd   1/1       Running   0          5m
 [root@mstnode ~]# kubectl get deployment
 NAME                                  DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-sidecar-injector-webhook-deployment   1         1         1            1           5m
-```
-
-2. Label the default namespace with `sidecar-injector=enabled`
-```
-kubectl label namespace default sidecar-injector=enabled
-[root@mstnode ~]# kubectl get namespace -L sidecar-injector
-NAME          STATUS    AGE       SIDECAR-INJECTOR
-default       Active    18h       enabled
-kube-public   Active    18h
-kube-system   Active    18h
-```
-
-3. Deploy an app in Kubernetes cluster, take `sleep` app as an example
-```
-[root@mstnode ~]# cat <<EOF | kubectl create -f -
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: sleep
-spec:
-  replicas: 1
-  template:
-    metadata:
-      annotations:
-        sidecar-injector-webhook.morven.me/inject: "yes"
-      labels:
-        app: sleep
-    spec:
-      containers:
-      - name: sleep
-        image: tutum/curl
-        command: ["/bin/sleep","infinity"]
-        imagePullPolicy: 
-EOF
-```
-
-4. Verify sidecar container injected
-```
-[root@mstnode ~]# kubectl get pods
-NAME                     READY     STATUS        RESTARTS   AGE
-sleep-5c55f85f5c-tn2cs   2/2       Running       0          1m
+lcow-injector-webhook-deployment   1         1         1            1           5m
 ```
