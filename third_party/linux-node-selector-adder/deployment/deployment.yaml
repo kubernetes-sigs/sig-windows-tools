@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: lcow-injector-webhook-deployment
+  labels:
+    app: lcow-injector
+  namespace: injector
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: lcow-injector
+    spec:
+      containers:
+        - name: lcow-injector
+          image: nickwork.azurecr.io/linux-fixer:windows
+          imagePullPolicy: IfNotPresent
+          args:
+            - -tlsCertFile=/etc/webhook/certs/cert.pem
+            - -tlsKeyFile=/etc/webhook/certs/key.pem
+            - -alsologtostderr
+            - -v=4
+            - 2>&1
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      nodeSelector:
+        'beta.kubernetes.io/os': windows
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: lcow-injector-webhook-certs
+      imagePullSecrets:
+      - name: regcred

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcow-injector-webhook-svc
+  labels:
+    app: lcow-injector
+  namespace: injector
+spec:
+  ports:
+  - port: 443
+    targetPort: 443
+  selector:
+    app: lcow-injector
