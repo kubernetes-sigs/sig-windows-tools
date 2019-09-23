@@ -1195,7 +1195,7 @@ function GetKubeDnsServiceIp()
 
 function GetAPIServerEndpoint() {
     $endpoints = ConvertFrom-Json $(kubectl.exe get endpoints --all-namespaces -o json | Out-String)
-    $endpoints.Items | foreach { $i = $_; if ($i.Metadata.Name -eq "kubernetes") { return "$($i.subsets.addresses.ip):$($i.subsets.ports.port)" } }
+    $endpoints.Items | foreach { $i = $_; if ($i.Metadata.Name -eq "kubernetes") { return "$($i.subsets.addresses.ip[0]):$($i.subsets.ports.port)" } }
 }
 
 function GetKubeNodes()
