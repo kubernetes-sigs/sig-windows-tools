@@ -193,7 +193,7 @@ if ($install.IsPresent)
     InstallKubernetesBinaries -Destination  $Global:BaseDir -Source $Global:ClusterConfiguration.Kubernetes.Source
     DownloadCniBinaries -NetworkMode $Global:NetworkMode -CniPath $(GetCniPath)
 
-    if (!(Test-Path ~/.ssh/id_rsa.pub))
+    if (!(Test-Path "$(GetUserDir)/.ssh/id_rsa.pub"))
     {
         $res = Read-Host "Do you wish to generate a SSH Key & Add it to the Linux control-plane node [Y/n] - Default [Y]"
         if ($res -eq '' -or $res -eq 'Y'  -or $res -eq 'y')
@@ -202,7 +202,7 @@ if ($install.IsPresent)
         }
     }
 
-    $pubKey = Get-Content ~/.ssh/id_rsa.pub
+    $pubKey = Get-Content "$(GetUserDir)/.ssh/id_rsa.pub"
     Write-Host "Execute the below commands on the Linux control-plane node ($Global:MasterIp) to add this Windows node's public key to its authorized keys"
     
     Write-Host "touch ~/.ssh/authorized_keys"
@@ -309,6 +309,6 @@ elseif ($Reset.IsPresent)
     UninstallKubernetesBinaries -Destination  $Global:BaseDir
 
     Remove-Item $Global:BaseDir -ErrorAction SilentlyContinue
-    Remove-Item ~\.kube -ErrorAction SilentlyContinue
+    Remove-Item "$(GetUserDir)\.kube" -ErrorAction SilentlyContinue
     RemoveExternalNetwork
 }
