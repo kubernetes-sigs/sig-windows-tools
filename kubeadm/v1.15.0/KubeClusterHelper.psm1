@@ -247,6 +247,27 @@ function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
     }
 }
 
+function WaitForNetworkInterface($IpAddress, $waitTimeSeconds = 60)
+{
+    $startTime = Get-Date
+
+    # Wait till the interface is available
+    while ($true)
+    {
+        $timeElapsed = $(Get-Date) - $startTime
+        if ($($timeElapsed).TotalSeconds -ge $waitTimeSeconds)
+        {
+            throw "Fail to create the interface [($IpAddress)] in $waitTimeSeconds seconds"
+        }
+        if (Get-NetIPAddress | ? IPAddress -EQ $IpAddress)
+        {
+            break;
+        }
+        Write-Host "Waiting for the interface ($IpAddress) to be available"
+        Start-Sleep 5
+    }
+}
+
 function IsNodeRegistered()
 {
     kubectl.exe get nodes/$($(hostname).ToLower())
@@ -1297,6 +1318,7 @@ Export-ModuleMember DownloadFile
 Export-ModuleMember CleanupOldNetwork
 Export-ModuleMember IsNodeRegistered
 Export-ModuleMember WaitForNetwork
+Export-ModuleMember WaitForNetworkInterface
 Export-ModuleMember GetSourceVip
 Export-ModuleMember Get-PodCIDR
 Export-ModuleMember Get-PodCIDRs
