@@ -460,7 +460,8 @@ function Get-MgmtSubnet
     )
     $na = Get-NetAdapter -InterfaceAlias "$InterfaceName"  -ErrorAction Stop
     $addr = (Get-NetIPAddress -InterfaceAlias "$InterfaceName" -AddressFamily IPv4).IPAddress
-    $mask = (Get-WmiObject Win32_NetworkAdapterConfiguration | ? InterfaceIndex -eq $($na.ifIndex)).IPSubnet[0]
+    $naReg = Get-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($na.InterfaceGuid)"
+    $mask = $naReg.GetValueNames() -like "*SubnetMask" | % { $naReg.GetValue($_) }
     $mgmtSubnet = (ConvertTo-DecimalIP $addr) -band (ConvertTo-DecimalIP $mask)
     $mgmtSubnet = ConvertTo-DottedDecimalIP $mgmtSubnet
     return "$mgmtSubnet/$(ConvertTo-MaskLength $mask)"
