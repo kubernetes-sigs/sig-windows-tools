@@ -207,7 +207,7 @@ function DownloadFile()
         Write-Host "Downloaded [$Url] => [$Destination]"
     } catch {
         Write-Error "Failed to download $Url"
-	    throw
+        throw
     }
 }
 
@@ -294,7 +294,8 @@ function DownloadCniBinaries($NetworkMode, $CniPath)
     CreateDirectory $CniPath\config
     DownloadFlannelBinaries -Destination $Global:BaseDir
     DownloadFile -Url https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-windows-amd64-v0.8.2.tgz -Destination $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz
-    tar -zxvf $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz -C $CniPath
+    & cmd /c tar -zxvf $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz -C $CniPath '2>&1'
+    if (!$?) { Write-Warning "Error decompressing file, exiting."; exit; }
 }
 
 function DownloadFlannelBinaries()
@@ -352,7 +353,7 @@ function InstallFlannelD()
 function UnInstallFlannelD()
 {
     RemoveService -ServiceName FlannelD
-    Remove-Item $(GetKubeFlannelPath) -Force -ErrorAction SilentlyContinue
+    Remove-Item $(GetKubeFlannelPath) -Force -Recurse -ErrorAction SilentlyContinue
 }
 
 function StartFlanneld()
@@ -475,8 +476,7 @@ function CreateDirectory($Path)
     }
 }
 
-function
-Update-NetConfig
+function Update-NetConfig
 {
     Param(
         $NetConfig,
@@ -793,7 +793,9 @@ function InstallKubelet()
 
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
-    kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"
+    cmd /c kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash" '2>&1'
+    if (!$?) { Write-Warning "Error joining cluster, exiting."; exit; }
+
     # Open firewall for 10250. Required for kubectl exec pod <>
     if (!(Get-NetFirewallRule -Name KubeletAllow10250 -ErrorAction SilentlyContinue ))
     {
@@ -815,7 +817,7 @@ function UninstallKubelet()
     }
 
     RemoveService -ServiceName Kubelet
-    kubeadm reset
+    cmd /c kubeadm reset -f '2>&1'
 }
 
 
@@ -1142,19 +1144,21 @@ function InstallPauseImage()
 function InstallKubernetesBinaries()
 {
     Param(
-    [parameter(Mandatory = $true)] $Source,
-    $DestinationPath
+        [parameter(Mandatory = $true)] $Source,
+        $DestinationPath
     ) 
 
     $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
 
-    # For current shell Path update
-    $env:path += ";$DestinationPath\kubernetes\node\bin"
-    # For Persistent across reboot
-    [Environment]::SetEnvironmentVariable("Path", $existingPath + ";$DestinationPath\kubernetes\node\bin", [EnvironmentVariableTarget]::Machine)
-
+    # Update path for current process, user, and machine
+    [System.EnvironmentVariableTarget].GetEnumNames() | % { 
+        $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::$_)
+        $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
+        [Environment]::SetEnvironmentVariable("Path", $existingPath + ";$DestinationPath\kubernetes\node\bin", [EnvironmentVariableTarget]::$_)
+        [Environment]::SetEnvironmentVariable("KUBECONFIG", $(GetKubeConfig), [EnvironmentVariableTarget]::$_)
+    }
+    
     $env:KUBECONFIG = $(GetKubeConfig)
-    [Environment]::SetEnvironmentVariable("KUBECONFIG", $(GetKubeConfig), [EnvironmentVariableTarget]::Machine)
 
     $Release = "1.15"
     if ($Source.Release)
@@ -1167,22 +1171,25 @@ function InstallKubernetesBinaries()
         $Url = $Source.Url
     }
     DownloadFile -Url  $Url -Destination $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz
-    tar -zxvf $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz -C $DestinationPath
+    & cmd /c tar -zxvf $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz -C $DestinationPath '2>&1'
+    if (!$?) { Write-Warning "Error decompressing file, exiting."; exit; }
 }
 
 function UninstallKubernetesBinaries()
 {
     Param(
-    $DestinationPath
+        $DestinationPath
     ) 
     Remove-Item Env:\KUBECONFIG -ErrorAction SilentlyContinue
 
-    # For current shell Path update
-    $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-    $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
-    # For Persistent across reboot
-    [Environment]::SetEnvironmentVariable("Path", $existingPath, [EnvironmentVariableTarget]::Machine)
-    Remove-Item $DestinationPath -Force -ErrorAction SilentlyContinue
+    # Update path for current process, user, and machine
+    [System.EnvironmentVariableTarget].GetEnumNames() | % { 
+        $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::$_)
+        $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
+        [Environment]::SetEnvironmentVariable("Path", $existingPath, [EnvironmentVariableTarget]::$_)
+    }
+    
+    Remove-Item $DestinationPath -Force -Recurse -ErrorAction SilentlyContinue
 }
 
 function InstallContainersRole()
