@@ -332,6 +332,7 @@ function InstallFlannelD()
     {
         $nodeName = (hostname).ToLower()
         CreateService -ServiceName FlannelD -CommandLine $flanneldArgs `
+            -DependsOn "kubelet" `
             -LogFile "$log" -EnvVaribles @{NODE_NAME = "$nodeName";}    
     }
 }
@@ -767,7 +768,10 @@ function InstallKubelet()
 
     $kubeletBinPath = $((get-command kubelet.exe -ErrorAction Stop).Source)
 
-    New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$hostname --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
+    New-Service -Name "kubelet" -StartupType Automatic `
+        -DependsOn "docker" `
+        -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
+
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
     kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"
@@ -852,11 +856,13 @@ function CreateService()
         [parameter(Mandatory=$true)] [string] $ServiceName,
         [parameter(Mandatory=$true)] [string[]] $CommandLine,
         [parameter(Mandatory=$true)] [string] $LogFile,
+        [parameter(Mandatory=$false)] [string[]] $DependsOn = @(),
         [parameter(Mandatory=$false)] [Hashtable] $EnvVaribles = $null
     )
     $binary = CreateSCMService -ServiceName $ServiceName -CommandLine $CommandLine -LogFile $LogFile -EnvVaribles $EnvVaribles
 
     New-Service -name $ServiceName -binaryPathName $binary `
+        -DependsOn $DependsOn `
         -displayName $ServiceName -startupType Automatic    `
         -Description "$ServiceName Kubernetes Service" 
 
@@ -864,10 +870,11 @@ function CreateService()
     ++++++++++++++++++++++++++++++++
     Successfully created the service
     ++++++++++++++++++++++++++++++++
-    Service [$ServiceName]
-    Cmdline [$binary] 
-    Env     [$($EnvVaribles | ConvertTo-Json -Depth 10)]
-    Log     [$LogFile]
+    Service   [$ServiceName]
+    Cmdline   [$binary]
+    Env       [$($EnvVaribles | ConvertTo-Json -Depth 10)]
+    Log       [$LogFile]
+    DependsOn [$($DependsOn -join ", ")]
     ++++++++++++++++++++++++++++++++
 "@
 }
