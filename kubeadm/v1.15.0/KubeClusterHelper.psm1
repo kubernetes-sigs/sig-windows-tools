@@ -33,6 +33,18 @@ function GetLogDir()
     return [io.Path]::Combine($Global:BaseDir, "logs");
 }
 
+function GetUserDir()
+{
+    if ($env:HOMEDRIVE -and $env:HOMEPATH)
+    {
+        Join-Path $env:HOMEDRIVE $env:HOMEPATH
+    }
+    else
+    {
+        (Resolve-Path ~).Path
+    }
+}
+
 function GetCniPath()
 {
     return [io.Path]::Combine($Global:BaseDir, "cni");
@@ -1298,6 +1310,7 @@ Export-ModuleMember CleanupOldNetwork
 Export-ModuleMember IsNodeRegistered
 Export-ModuleMember WaitForNetwork
 Export-ModuleMember GetSourceVip
+Export-ModuleMember GetUserDir
 Export-ModuleMember Get-PodCIDR
 Export-ModuleMember Get-PodCIDRs
 Export-ModuleMember Get-PodEndpointGateway
