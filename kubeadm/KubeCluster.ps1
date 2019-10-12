@@ -139,8 +139,8 @@ function ReadKubeclusterConfig($ConfigFile)
 
 ###############################################################################################
 # Download pre-req scripts
-
-Import-Module "$PSScriptRoot\KubeClusterHelper.psm1"
+$helperPath = "$PSScriptRoot\KubeClusterHelper.psm1"
+Import-Module $helperPath
 $hnsPath = "https://raw.githubusercontent.com/Microsoft/SDN/master/Kubernetes/windows/hns.psm1"
 $hnsDestination = "$PSScriptRoot\hns.psm1" 
 DownloadFile -Url $hnsPath -Destination $hnsDestination
@@ -183,21 +183,34 @@ Restart-And-Run()
         $sourceScriptPath = $scriptPath
         $scriptPath = "$pwd\$($script:MyInvocation.MyCommand.Name)"
 
-        Copy-Item $sourceScriptPath $scriptPath
+        Copy-Item $sourceScriptPath $pwd -Force
+        Copy-Item $helperPath $pwd -Force
     }
 
     Write-Output "Creating scheduled task action ($scriptPath $argList)..."
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $scriptPath $argList"
-
-    Write-Output "Creating scheduled task trigger..."
-    $trigger = New-ScheduledTaskTrigger -AtLogOn
-
-    Write-Output "Registering script to re-run at next user logon..."
-    Register-ScheduledTask -TaskName "ContainerBootstrap" -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass $scriptPath $argList" -WorkingDirectory $pwd 
 
     try
     {
-        Restart-Computer  
+        if ($force.IsPresent)
+        {
+            Write-Output "Creating scheduled task trigger..."
+            $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+            Write-Output "Registering script to re-run at next user logon..."
+            Register-ScheduledTask -TaskName "ContainerBootstrap" -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
+            Restart-Computer -Force
+        }
+        else
+        {
+            Write-Output "Creating scheduled task trigger..."
+            $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+            Write-Output "Registering script to re-run at next user logon..."
+            Register-ScheduledTask -TaskName "ContainerBootstrap" -Action $action -Trigger $trigger -RunLevel Highest | Out-Null
+
+            Restart-Computer
+        }
     }
     catch
     {
@@ -238,26 +251,38 @@ if ($install.IsPresent)
             {
                 ssh-keygen.exe
             }
-            else
-            {
-                Write-Host "Please close this shell and open a new one to join this node to the cluster."
-                exit
-            }
         }
         else
         {
             Write-Host "Generating SSH key"
+            if (!(Test-Path "$env:USERPROFILE/.ssh")) { New-Item -Path "$env:USERPROFILE/.ssh" -ItemType "Directory" -Force }
             cmd /c "ssh-keygen.exe -t rsa -N """" -f ""$env:USERPROFILE\.ssh\id_rsa"""
             cmd /c "ssh-keyscan.exe $($Global:MasterIp) 2>NUL" | Out-File -Encoding utf8 $env:USERPROFILE\.ssh\known_hosts
         }
     }
-
-    $pubKey = Get-Content "$(GetUserDir)/.ssh/id_rsa.pub"
-    Write-Host "Execute the below commands on the Linux control-plane node ($Global:MasterIp) to add this Windows node's public key to its authorized keys"
+    else
+    {
+        "$(GetUserDir)/.ssh/id_rsa.pub"
+        Write-Host "Execute the below commands on the Linux control-plane node ($Global:MasterIp) to add this Windows node's public key to its authorized keys"
     
-    Write-Host "touch ~/.ssh/authorized_keys"
-    Write-Host "echo $pubKey >> ~/.ssh/authorized_keys"
+        Write-Host "touch ~/.ssh/authorized_keys"
+        Write-Host "echo $pubKey >> ~/.ssh/authorized_keys"
+    }
+
     Write-Host "Please close this shell and open a new one to join this node to the cluster."
+
+    # Check for ContainerBootstrap task that needs to get removed
+    $task = Get-ScheduledTask -TaskName "ContainerBootstrap" -ErrorAction "SilentlyContinue"
+    if ($task -ne $null)
+    {
+        $task | Unregister-ScheduledTask -Confirm:$false
+        Write-Host "Unregistered ContainerBootstrap scheduled task, as InstallPrerequisites has completed."
+        
+        if (!($force.IsPresent))
+        {
+            Read-Host "Press enter to close this window"
+        }
+    }
 
     exit
 }
