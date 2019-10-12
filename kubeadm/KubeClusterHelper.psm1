@@ -527,7 +527,7 @@ Update-CNIConfig
             "name": "<NetworkMode>",
             "type": "flannel",
             "capabilities": {
-              "dns": true
+                "dns" : true
             },
             "delegate": {
                "type": "win-bridge",
@@ -536,31 +536,29 @@ Update-CNIConfig
                   "Search": [ "svc.cluster.local" ]
                 },
                 "policies" : [
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>", "<MgmtSubnet>" ] }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<MgmtIP>/32", "NeedEncap" : true }
-                  }
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>", "<MgmtSubnet>" ] }
+                   },
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
+                   },
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<MgmtIP>/32", "NeedEncap" : true }
+                   }
                 ]
-              }
-          }'
+            }
+        }'
 
-              $configJson =  ConvertFrom-Json $jsonSampleConfig
-              $configJson.name = $NetworkName
-              $configJson.delegate.type = "win-bridge"
-              $configJson.delegate.dns.Nameservers[0] = $KubeDnsServiceIP
-              $configJson.delegate.dns.Search[0] = "svc.cluster.local"
+        $configJson =  ConvertFrom-Json $jsonSampleConfig
+        $configJson.name = $NetworkName
+        $configJson.delegate.type = "win-bridge"
           
-              $configJson.delegate.policies[0].Value.ExceptionList[0] = $clusterCIDR
-              $configJson.delegate.policies[0].Value.ExceptionList[1] = $serviceCIDR
-              $configJson.delegate.policies[0].Value.ExceptionList[2] = $Global:ManagementSubnet
+        $configJson.delegate.policies[0].Value.ExceptionList[0] = $clusterCIDR
+        $configJson.delegate.policies[0].Value.ExceptionList[1] = $serviceCIDR
+        $configJson.delegate.policies[0].Value.ExceptionList[2] = $Global:ManagementSubnet
           
-              $configJson.delegate.policies[1].Value.DestinationPrefix  = $serviceCIDR
-              $configJson.delegate.policies[2].Value.DestinationPrefix  = ($Global:ManagementIp + "/32")
+        $configJson.delegate.policies[1].Value.DestinationPrefix  = $serviceCIDR
+        $configJson.delegate.policies[2].Value.DestinationPrefix  = ($Global:ManagementIp + "/32")
     }
     elseif ($NetworkMode -eq "overlay")
     {
@@ -569,36 +567,30 @@ Update-CNIConfig
             "name": "<NetworkMode>",
             "type": "flannel",
             "capabilities": {
-              "dns": true
+                "dns" : true
             },
             "delegate": {
-               "type": "win-overlay",
-                "dns" : {
-                  "Nameservers" : [ "11.0.0.10" ],
-                  "Search": [ "default.svc.cluster.local" ]
-                },
+                "type": "win-overlay",
                 "Policies" : [
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>" ] }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
-                  }
+                   {
+                       "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>" ] }
+                   },
+                   {
+                       "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
+                   }
                 ]
-              }
-          }'
+            }
+        }'
           
-              $configJson =  ConvertFrom-Json $jsonSampleConfig
-              $configJson.name = $NetworkName
-              $configJson.type = "flannel"
-              $configJson.delegate.type = "win-overlay"
-              $configJson.delegate.dns.Nameservers[0] = $KubeDnsServiceIp
-              $configJson.delegate.dns.Search[0] = "svc.cluster.local"
+        $configJson =  ConvertFrom-Json $jsonSampleConfig
+        $configJson.name = $NetworkName
+        $configJson.type = "flannel"
+        $configJson.delegate.type = "win-overlay"
           
-              $configJson.delegate.Policies[0].Value.ExceptionList[0] = $clusterCIDR
-              $configJson.delegate.Policies[0].Value.ExceptionList[1] = $serviceCIDR
+        $configJson.delegate.Policies[0].Value.ExceptionList[0] = $clusterCIDR
+        $configJson.delegate.Policies[0].Value.ExceptionList[1] = $serviceCIDR
           
-              $configJson.delegate.Policies[1].Value.DestinationPrefix  = $serviceCIDR
+        $configJson.delegate.Policies[1].Value.DestinationPrefix  = $serviceCIDR
     }
     
     $CNIConfig = [io.Path]::Combine($(GetCniConfigPath), "cni.conf");
@@ -793,7 +785,7 @@ function InstallKubelet()
 
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
-    cmd /c kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash" '2>&1'
+    & cmd /c kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash" '2>&1'
     if (!$?) { Write-Warning "Error joining cluster, exiting."; exit; }
 
     # Open firewall for 10250. Required for kubectl exec pod <>
@@ -817,7 +809,7 @@ function UninstallKubelet()
     }
 
     RemoveService -ServiceName Kubelet
-    cmd /c kubeadm reset -f '2>&1'
+    & cmd /c kubeadm reset -f '2>&1'
 }
 
 
@@ -1096,7 +1088,8 @@ function InstallDockerD()
 
     $cmd = get-command docker.exe -ErrorAction SilentlyContinue
     if (!$cmd)
-    {      
+    {
+        Get-PackageProvider -Name NuGet -ForceBootstrap | Out-Null
         Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
         Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion 18.09
         Start-Service Docker -ErrorAction Stop
