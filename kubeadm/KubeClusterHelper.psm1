@@ -235,7 +235,6 @@ function CleanupPolicyList()
     {
         $policyList | Remove-HnsPolicyList
     }
-
 }
 
 function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
@@ -531,10 +530,6 @@ Update-CNIConfig
             },
             "delegate": {
                "type": "win-bridge",
-                "dns" : {
-                  "Nameservers" : [ "10.96.0.10" ],
-                  "Search": [ "svc.cluster.local" ]
-                },
                 "policies" : [
                    {
                       "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>", "<MgmtSubnet>" ] }
@@ -665,8 +660,8 @@ function GetKubeletArguments()
         #'--resolv-conf=\"\"',
         #'--allow-privileged=true',
         #'--enable-debugging-handlers', # Comment for Config
-        #"--cluster-dns=$KubeDnsServiceIp", # Comment for Config
-        #'--cluster-domain=cluster.local', # Comment for Config
+        "--cluster-dns=`"$KubeDnsServiceIp`"",
+        '--cluster-domain=cluster.local', 
         #'--hairpin-mode=promiscuous-bridge', # Comment for Config
         '--image-pull-progress-deadline=20m'
         '--cgroups-per-qos=false'
@@ -781,7 +776,7 @@ function InstallKubelet()
 
     New-Service -Name "kubelet" -StartupType Automatic `
         -DependsOn "docker" `
-        -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
+        -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --cluster-dns=`"$KubeDnsServiceIp`" --cluster-domain=cluster.local --feature-gates=$KubeletFeatureGates"
 
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
@@ -832,13 +827,13 @@ function InstallKubeProxy()
     $log = [io.Path]::Combine($logDir, "kubproxysvc.log");
 
     Write-Host "Installing Kubeproxy Service"
-    $proxyArgs = GetProxyArguments -KubeConfig $KubeConfig  `
-                    -KubeProxyConfig $kubeproxyConfig `
-                    -IsDsr:$IsDsr.IsPresent -NetworkName $NetworkName   `
-                    -SourceVip $SourceVip `
-                    -ClusterCIDR $ClusterCIDR `
-                    -ProxyFeatureGates $ProxyFeatureGates `
-                    -LogDir $logDir
+    $proxyArgs = GetProxyArguments -KubeConfig $KubeConfig `
+        -KubeProxyConfig $kubeproxyConfig `
+        -IsDsr:$IsDsr.IsPresent -NetworkName $NetworkName `
+        -SourceVip $SourceVip `
+        -ClusterCIDR $ClusterCIDR `
+        -ProxyFeatureGates $ProxyFeatureGates `
+        -LogDir $logDir
     
     New-Service -Name "kubeproxy" -StartupType Automatic -BinaryPathName "$proxyArgs"
 }

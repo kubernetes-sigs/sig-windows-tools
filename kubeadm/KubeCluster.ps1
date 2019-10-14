@@ -383,7 +383,16 @@ elseif ($Reset.IsPresent)
     UninstallKubelet
     UninstallKubernetesBinaries -Destination  $Global:BaseDir
 
-    Remove-Item $Global:BaseDir -ErrorAction SilentlyContinue
-    Remove-Item "$(GetUserDir)\.kube" -ErrorAction SilentlyContinue
+    if ($force.IsPresent)
+    {
+        Remove-Item $Global:BaseDir -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item "$(GetUserDir)\.kube" -Recurse -Force -ErrorAction SilentlyContinue    
+    }
+    else
+    {
+        Remove-Item $Global:BaseDir -ErrorAction SilentlyContinue
+        Remove-Item "$(GetUserDir)\.kube" -ErrorAction SilentlyContinue    
+    }
+
     RemoveExternalNetwork
 }
