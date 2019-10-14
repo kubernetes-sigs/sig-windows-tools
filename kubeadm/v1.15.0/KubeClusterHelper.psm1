@@ -1286,6 +1286,8 @@ function InstallCNI($cni, $NetworkMode, $ManagementIp, $CniPath, $InterfaceName)
                 -ClusterCIDR (GetClusterCidr) `
                 -NetworkName $Global:NetworkName -NetworkMode $Global:NetworkMode
 
+            Copy-Item $(GetFlannelNetConf) $(GetKubeFlannelPath)
+
             break
         }
     } 
