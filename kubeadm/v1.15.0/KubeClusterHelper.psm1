@@ -525,6 +525,9 @@ Update-CNIConfig
             "cniVersion": "0.2.0",
             "name": "<NetworkMode>",
             "type": "flannel",
+            "capabilities": {
+              "dns": true
+            },
             "delegate": {
                "type": "win-bridge",
                 "dns" : {
@@ -564,6 +567,9 @@ Update-CNIConfig
             "cniVersion": "0.2.0",
             "name": "<NetworkMode>",
             "type": "flannel",
+            "capabilities": {
+              "dns": true
+            },
             "delegate": {
                "type": "win-overlay",
                 "dns" : {
