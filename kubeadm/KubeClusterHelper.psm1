@@ -207,7 +207,7 @@ function DownloadFile()
         Write-Host "Downloaded [$Url] => [$Destination]"
     } catch {
         Write-Error "Failed to download $Url"
-	    throw
+        throw
     }
 }
 
@@ -235,7 +235,6 @@ function CleanupPolicyList()
     {
         $policyList | Remove-HnsPolicyList
     }
-
 }
 
 function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
@@ -294,7 +293,8 @@ function DownloadCniBinaries($NetworkMode, $CniPath)
     CreateDirectory $CniPath\config
     DownloadFlannelBinaries -Destination $Global:BaseDir
     DownloadFile -Url https://github.com/containernetworking/plugins/releases/download/v0.8.2/cni-plugins-windows-amd64-v0.8.2.tgz -Destination $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz
-    tar -zxvf $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz -C $CniPath
+    & cmd /c tar -zxvf $Global:BaseDir/cni-plugins-windows-amd64-v0.8.2.tgz -C $CniPath '2>&1'
+    if (!$?) { Write-Warning "Error decompressing file, exiting."; exit; }
 }
 
 function DownloadFlannelBinaries()
@@ -352,7 +352,7 @@ function InstallFlannelD()
 function UnInstallFlannelD()
 {
     RemoveService -ServiceName FlannelD
-    Remove-Item $(GetKubeFlannelPath) -Force -ErrorAction SilentlyContinue
+    Remove-Item $(GetKubeFlannelPath) -Force -Recurse -ErrorAction SilentlyContinue
 }
 
 function StartFlanneld()
@@ -460,7 +460,8 @@ function Get-MgmtSubnet
     )
     $na = Get-NetAdapter -InterfaceAlias "$InterfaceName"  -ErrorAction Stop
     $addr = (Get-NetIPAddress -InterfaceAlias "$InterfaceName" -AddressFamily IPv4).IPAddress
-    $mask = (Get-WmiObject Win32_NetworkAdapterConfiguration | ? InterfaceIndex -eq $($na.ifIndex)).IPSubnet[0]
+    $naReg = Get-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($na.InterfaceGuid)"
+    $mask = $naReg.GetValueNames() -like "*SubnetMask" | % { $naReg.GetValue($_) }
     $mgmtSubnet = (ConvertTo-DecimalIP $addr) -band (ConvertTo-DecimalIP $mask)
     $mgmtSubnet = ConvertTo-DottedDecimalIP $mgmtSubnet
     return "$mgmtSubnet/$(ConvertTo-MaskLength $mask)"
@@ -474,8 +475,7 @@ function CreateDirectory($Path)
     }
 }
 
-function
-Update-NetConfig
+function Update-NetConfig
 {
     Param(
         $NetConfig,
@@ -526,40 +526,34 @@ Update-CNIConfig
             "name": "<NetworkMode>",
             "type": "flannel",
             "capabilities": {
-              "dns": true
+                "dns" : true
             },
             "delegate": {
                "type": "win-bridge",
-                "dns" : {
-                  "Nameservers" : [ "10.96.0.10" ],
-                  "Search": [ "svc.cluster.local" ]
-                },
                 "policies" : [
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>", "<MgmtSubnet>" ] }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<MgmtIP>/32", "NeedEncap" : true }
-                  }
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>", "<MgmtSubnet>" ] }
+                   },
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
+                   },
+                   {
+                      "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<MgmtIP>/32", "NeedEncap" : true }
+                   }
                 ]
-              }
-          }'
+            }
+        }'
 
-              $configJson =  ConvertFrom-Json $jsonSampleConfig
-              $configJson.name = $NetworkName
-              $configJson.delegate.type = "win-bridge"
-              $configJson.delegate.dns.Nameservers[0] = $KubeDnsServiceIP
-              $configJson.delegate.dns.Search[0] = "svc.cluster.local"
+        $configJson =  ConvertFrom-Json $jsonSampleConfig
+        $configJson.name = $NetworkName
+        $configJson.delegate.type = "win-bridge"
           
-              $configJson.delegate.policies[0].Value.ExceptionList[0] = $clusterCIDR
-              $configJson.delegate.policies[0].Value.ExceptionList[1] = $serviceCIDR
-              $configJson.delegate.policies[0].Value.ExceptionList[2] = $Global:ManagementSubnet
+        $configJson.delegate.policies[0].Value.ExceptionList[0] = $clusterCIDR
+        $configJson.delegate.policies[0].Value.ExceptionList[1] = $serviceCIDR
+        $configJson.delegate.policies[0].Value.ExceptionList[2] = $Global:ManagementSubnet
           
-              $configJson.delegate.policies[1].Value.DestinationPrefix  = $serviceCIDR
-              $configJson.delegate.policies[2].Value.DestinationPrefix  = ($Global:ManagementIp + "/32")
+        $configJson.delegate.policies[1].Value.DestinationPrefix  = $serviceCIDR
+        $configJson.delegate.policies[2].Value.DestinationPrefix  = ($Global:ManagementIp + "/32")
     }
     elseif ($NetworkMode -eq "overlay")
     {
@@ -568,36 +562,30 @@ Update-CNIConfig
             "name": "<NetworkMode>",
             "type": "flannel",
             "capabilities": {
-              "dns": true
+                "dns" : true
             },
             "delegate": {
-               "type": "win-overlay",
-                "dns" : {
-                  "Nameservers" : [ "11.0.0.10" ],
-                  "Search": [ "default.svc.cluster.local" ]
-                },
+                "type": "win-overlay",
                 "Policies" : [
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>" ] }
-                  },
-                  {
-                    "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
-                  }
+                   {
+                       "Name" : "EndpointPolicy", "Value" : { "Type" : "OutBoundNAT", "ExceptionList": [ "<ClusterCIDR>", "<ServerCIDR>" ] }
+                   },
+                   {
+                       "Name" : "EndpointPolicy", "Value" : { "Type" : "ROUTE", "DestinationPrefix": "<ServerCIDR>", "NeedEncap" : true }
+                   }
                 ]
-              }
-          }'
+            }
+        }'
           
-              $configJson =  ConvertFrom-Json $jsonSampleConfig
-              $configJson.name = $NetworkName
-              $configJson.type = "flannel"
-              $configJson.delegate.type = "win-overlay"
-              $configJson.delegate.dns.Nameservers[0] = $KubeDnsServiceIp
-              $configJson.delegate.dns.Search[0] = "svc.cluster.local"
+        $configJson =  ConvertFrom-Json $jsonSampleConfig
+        $configJson.name = $NetworkName
+        $configJson.type = "flannel"
+        $configJson.delegate.type = "win-overlay"
           
-              $configJson.delegate.Policies[0].Value.ExceptionList[0] = $clusterCIDR
-              $configJson.delegate.Policies[0].Value.ExceptionList[1] = $serviceCIDR
+        $configJson.delegate.Policies[0].Value.ExceptionList[0] = $clusterCIDR
+        $configJson.delegate.Policies[0].Value.ExceptionList[1] = $serviceCIDR
           
-              $configJson.delegate.Policies[1].Value.DestinationPrefix  = $serviceCIDR
+        $configJson.delegate.Policies[1].Value.DestinationPrefix  = $serviceCIDR
     }
     
     $CNIConfig = [io.Path]::Combine($(GetCniConfigPath), "cni.conf");
@@ -672,8 +660,8 @@ function GetKubeletArguments()
         #'--resolv-conf=\"\"',
         #'--allow-privileged=true',
         #'--enable-debugging-handlers', # Comment for Config
-        #"--cluster-dns=$KubeDnsServiceIp", # Comment for Config
-        #'--cluster-domain=cluster.local', # Comment for Config
+        "--cluster-dns=`"$KubeDnsServiceIp`"",
+        '--cluster-domain=cluster.local', 
         #'--hairpin-mode=promiscuous-bridge', # Comment for Config
         '--image-pull-progress-deadline=20m'
         '--cgroups-per-qos=false'
@@ -788,11 +776,13 @@ function InstallKubelet()
 
     New-Service -Name "kubelet" -StartupType Automatic `
         -DependsOn "docker" `
-        -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --feature-gates=$KubeletFeatureGates"
+        -BinaryPathName "$kubeletBinPath --windows-service --v=6 --log-dir=$logDir --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --cni-bin-dir=$CniDir --cni-conf-dir=$CniConf --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=$Global:PauseImage --enable-debugging-handlers  --cgroups-per-qos=false --enforce-node-allocatable=`"`" --logtostderr=false --network-plugin=cni --resolv-conf=`"`" --cluster-dns=`"$KubeDnsServiceIp`" --cluster-domain=cluster.local --feature-gates=$KubeletFeatureGates"
 
     # Investigate why the below doesn't work, probably a syntax error with the args
     #New-Service -Name "kubelet" -StartupType Automatic -BinaryPathName "$kubeletArgs"
-    kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash"
+    & cmd /c kubeadm join "$(GetAPIServerEndpoint)" --token "$Global:Token" --discovery-token-ca-cert-hash "$Global:CAHash" '2>&1'
+    if (!$?) { Write-Warning "Error joining cluster, exiting."; exit; }
+
     # Open firewall for 10250. Required for kubectl exec pod <>
     if (!(Get-NetFirewallRule -Name KubeletAllow10250 -ErrorAction SilentlyContinue ))
     {
@@ -814,7 +804,7 @@ function UninstallKubelet()
     }
 
     RemoveService -ServiceName Kubelet
-    kubeadm reset
+    & cmd /c kubeadm reset -f '2>&1'
 }
 
 
@@ -837,13 +827,13 @@ function InstallKubeProxy()
     $log = [io.Path]::Combine($logDir, "kubproxysvc.log");
 
     Write-Host "Installing Kubeproxy Service"
-    $proxyArgs = GetProxyArguments -KubeConfig $KubeConfig  `
-                    -KubeProxyConfig $kubeproxyConfig `
-                    -IsDsr:$IsDsr.IsPresent -NetworkName $NetworkName   `
-                    -SourceVip $SourceVip `
-                    -ClusterCIDR $ClusterCIDR `
-                    -ProxyFeatureGates $ProxyFeatureGates `
-                    -LogDir $logDir
+    $proxyArgs = GetProxyArguments -KubeConfig $KubeConfig `
+        -KubeProxyConfig $kubeproxyConfig `
+        -IsDsr:$IsDsr.IsPresent -NetworkName $NetworkName `
+        -SourceVip $SourceVip `
+        -ClusterCIDR $ClusterCIDR `
+        -ProxyFeatureGates $ProxyFeatureGates `
+        -LogDir $logDir
     
     New-Service -Name "kubeproxy" -StartupType Automatic -BinaryPathName "$proxyArgs"
 }
@@ -1093,7 +1083,8 @@ function InstallDockerD()
 
     $cmd = get-command docker.exe -ErrorAction SilentlyContinue
     if (!$cmd)
-    {      
+    {
+        Get-PackageProvider -Name NuGet -ForceBootstrap | Out-Null
         Install-Module -Name DockerMsftProvider -Repository PSGallery -Force
         Install-Package -Name docker -ProviderName DockerMsftProvider -Force -RequiredVersion 18.09
         Start-Service Docker -ErrorAction Stop
@@ -1141,19 +1132,21 @@ function InstallPauseImage()
 function InstallKubernetesBinaries()
 {
     Param(
-    [parameter(Mandatory = $true)] $Source,
-    $DestinationPath
+        [parameter(Mandatory = $true)] $Source,
+        $DestinationPath
     ) 
 
     $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
 
-    # For current shell Path update
-    $env:path += ";$DestinationPath\kubernetes\node\bin"
-    # For Persistent across reboot
-    [Environment]::SetEnvironmentVariable("Path", $existingPath + ";$DestinationPath\kubernetes\node\bin", [EnvironmentVariableTarget]::Machine)
-
+    # Update path for current process, user, and machine
+    [System.EnvironmentVariableTarget].GetEnumNames() | % { 
+        $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::$_)
+        $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
+        [Environment]::SetEnvironmentVariable("Path", $existingPath + ";$DestinationPath\kubernetes\node\bin", [EnvironmentVariableTarget]::$_)
+        [Environment]::SetEnvironmentVariable("KUBECONFIG", $(GetKubeConfig), [EnvironmentVariableTarget]::$_)
+    }
+    
     $env:KUBECONFIG = $(GetKubeConfig)
-    [Environment]::SetEnvironmentVariable("KUBECONFIG", $(GetKubeConfig), [EnvironmentVariableTarget]::Machine)
 
     $Release = "1.15"
     if ($Source.Release)
@@ -1166,22 +1159,25 @@ function InstallKubernetesBinaries()
         $Url = $Source.Url
     }
     DownloadFile -Url  $Url -Destination $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz
-    tar -zxvf $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz -C $DestinationPath
+    & cmd /c tar -zxvf $Global:BaseDir/kubernetes-node-windows-amd64.tar.gz -C $DestinationPath '2>&1'
+    if (!$?) { Write-Warning "Error decompressing file, exiting."; exit; }
 }
 
 function UninstallKubernetesBinaries()
 {
     Param(
-    $DestinationPath
+        $DestinationPath
     ) 
     Remove-Item Env:\KUBECONFIG -ErrorAction SilentlyContinue
 
-    # For current shell Path update
-    $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-    $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
-    # For Persistent across reboot
-    [Environment]::SetEnvironmentVariable("Path", $existingPath, [EnvironmentVariableTarget]::Machine)
-    Remove-Item $DestinationPath -Force -ErrorAction SilentlyContinue
+    # Update path for current process, user, and machine
+    [System.EnvironmentVariableTarget].GetEnumNames() | % { 
+        $existingPath = [Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::$_)
+        $existingPath = $existingPath.Replace($DestinationPath+'\bin;', "")
+        [Environment]::SetEnvironmentVariable("Path", $existingPath, [EnvironmentVariableTarget]::$_)
+    }
+    
+    Remove-Item $DestinationPath -Force -Recurse -ErrorAction SilentlyContinue
 }
 
 function InstallContainersRole()
