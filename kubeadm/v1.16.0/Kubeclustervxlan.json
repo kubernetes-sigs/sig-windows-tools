@@ -21,8 +21,8 @@
     },
     "Kubernetes" : {
         "Source" : {
-            "Release" : "1.16.0",
-            "Url" : "https://dl.k8s.io/v1.16.0/kubernetes-node-windows-amd64.tar.gz"
+            "Release" : "1.16.2",
+            "Url" : "https://dl.k8s.io/v1.16.2/kubernetes-node-windows-amd64.tar.gz"
         },
         "ControlPlane" : {
             "IpAddress" : "kubemasterIP",

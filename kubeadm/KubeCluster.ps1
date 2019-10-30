@@ -87,7 +87,7 @@ function ReadKubeclusterConfig($ConfigFile)
     if (!$Global:ClusterConfiguration.Kubernetes.Source)
     {
         $Global:ClusterConfiguration.Kubernetes | Add-Member -MemberType NoteProperty -Name Source -Value @{
-            Release = "1.15.0";
+            Release = "1.16.2";
         }
     }
     if (!$Global:ClusterConfiguration.Kubernetes.ControlPlane)
@@ -129,7 +129,7 @@ function ReadKubeclusterConfig($ConfigFile)
         $Global:ClusterConfiguration | Add-Member -MemberType NoteProperty -Name Cri -Value @{
             Name = "dockerd";
             Images = @{
-                Pause = "mcr.microsoft.com/k8s/core/pause:1.0.0";
+                Pause = "mcr.microsoft.com/k8s/core/pause:1.2.0";
                 Nanoserver = "mcr.microsoft.com/windows/nanoserver:1809";
                 ServerCore = "mcr.microsoft.com/windows/servercore:ltsc2019";
             }
