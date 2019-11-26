@@ -240,6 +240,7 @@ function CleanupPolicyList()
 function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
 {
     $startTime = Get-Date
+    $triedRestart = $false
 
     # Wait till the network is available
     while ($true)
@@ -247,7 +248,21 @@ function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
         $timeElapsed = $(Get-Date) - $startTime
         if ($($timeElapsed).TotalSeconds -ge $waitTimeSeconds)
         {
-            throw "Fail to create the network[($NetworkName)] in $waitTimeSeconds seconds"
+            if ($triedRestart)
+            {
+                throw "Fail to create the network[($NetworkName)] in $waitTimeSeconds seconds, again."
+            }
+            
+            # Try Restarting Flanneld and see if that fixed the problem
+            Write-Host "Network [($NetworkName)] was not created within $waitTimeSeconds seconds..."
+            Write-Host "Attempting to turn FlannelD service off and back on again."
+            Stop-Service -Name FlannelD
+            Start-Sleep 5
+            StartFlanneld
+
+            # restart countdown & set triedRestart flag
+            $startTime = Get-Date
+            $triedRestart = $true
         }
         if ((Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()))
         {
