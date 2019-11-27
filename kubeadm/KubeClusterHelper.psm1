@@ -237,39 +237,63 @@ function CleanupPolicyList()
     }
 }
 
-function WaitForNetwork($NetworkName, $waitTimeSeconds = 60)
+function WaitForNetwork($NetworkName, $WaitTimeSeconds = 60, $DieOnFail = $true)
 {
     $startTime = Get-Date
-    $triedRestart = $false
 
     # Wait till the network is available
     while ($true)
     {
         $timeElapsed = $(Get-Date) - $startTime
-        if ($($timeElapsed).TotalSeconds -ge $waitTimeSeconds)
+        if ($($timeElapsed).TotalSeconds -ge $WaitTimeSeconds)
         {
-            if ($triedRestart)
+            $errMsg = "Fail to create the network ($NetworkName) in $WaitTimeSeconds seconds"
+            if ($DieOnFail)
             {
-                throw "Fail to create the network[($NetworkName)] in $waitTimeSeconds seconds, again."
+                throw $errMsg
             }
-            
-            # Try Restarting Flanneld and see if that fixed the problem
-            Write-Host "Network [($NetworkName)] was not created within $waitTimeSeconds seconds..."
-            Write-Host "Attempting to turn FlannelD service off and back on again."
-            Stop-Service -Name FlannelD
-            Start-Sleep 5
-            StartFlanneld
-
-            # restart countdown & set triedRestart flag
-            $startTime = Get-Date
-            $triedRestart = $true
+            Write-Host $errMsg
+            return $false
         }
         if ((Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()))
         {
-            break;
+            return $true
+        }
+        if ((Get-Service -Name FlannelD).Status -ne "Running")
+        {
+            Write-Host "FlannelD service stopped unexpectecdly"
+            return $false
         }
         Write-Host "Waiting for the Network ($NetworkName) to be created by flanneld"
         Start-Sleep 5
+    }
+}
+
+function WaitForNetworkInterface($IpAddress, $waitTimeSeconds = 60)
+{
+    $startTime = Get-Date
+    $firstPass = $true;
+
+    # Wait till the interface is available
+    while ($true)
+    {
+        $timeElapsed = $(Get-Date) - $startTime
+        if ($($timeElapsed).TotalSeconds -ge $waitTimeSeconds)
+        {
+            throw "Fail to create the interface [($IpAddress)] in $waitTimeSeconds seconds"
+        }
+
+        # We need to sleep at least once, if the interface is found on the first pass.
+        # It appears that even though Get-NetIPAddress can find it right away, FlannelD may not
+        if ((!$firstPass) -AND (Get-NetIPAddress | ? IPAddress -EQ $IpAddress))
+        {
+            Write-Host "Found management interface ($IpAddress)"
+            break;
+        }        
+
+        Write-Host "Waiting for the interface ($IpAddress) to be available"
+        Start-Sleep 6
+        $firstPass = $false;
     }
 }
 
@@ -379,6 +403,17 @@ function StartFlanneld()
     }
     Start-Service FlannelD -ErrorAction Stop
     WaitForServiceRunningState -ServiceName FlannelD  -TimeoutSeconds 30
+}
+
+function RestartFlanneld()
+{
+    Write-Host "Attempting to turn FlannelD service off and back on again"
+    if ((Get-Service -Name FlannelD).Status -eq "Running")
+    {
+        Stop-Service -Name FlannelD
+    }
+    Start-Sleep 5
+    StartFlanneld
 }
 
 function GetSourceVip($NetworkName)
@@ -1335,6 +1370,7 @@ Export-ModuleMember DownloadFile
 Export-ModuleMember CleanupOldNetwork
 Export-ModuleMember IsNodeRegistered
 Export-ModuleMember WaitForNetwork
+Export-ModuleMember WaitForNetworkInterface
 Export-ModuleMember GetSourceVip
 Export-ModuleMember GetUserDir
 Export-ModuleMember Get-PodCIDR
@@ -1349,6 +1385,7 @@ Export-ModuleMember DownloadAndExtractTarGz
 Export-ModuleMember Assert-FileExists
 Export-ModuleMember StartKubelet
 Export-ModuleMember StartFlanneld
+Export-ModuleMember RestartFlanneld
 Export-ModuleMember StartKubeproxy
 Export-ModuleMember CreateService
 Export-ModuleMember RemoveService

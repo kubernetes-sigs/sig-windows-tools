@@ -342,8 +342,16 @@ if ($Join.IsPresent)
     if ($Global:Cni -eq "flannel")
     {
         CreateExternalNetwork -NetworkMode $Global:NetworkMode -InterfaceName $Global:InterfaceName
+        WaitForNetworkInterface -IpAddress $Global:ManagementIp
         StartFlanneld 
-        WaitForNetwork $Global:NetworkName
+        
+        # Ensure Flannel created the HNS network
+        $flannelNetOk = WaitForNetwork -NetworkName $Global:NetworkName -DieOnFail $false
+        if (!$flannelNetOk)
+        {
+            RestartFlanneld
+            WaitForNetwork -NetworkName $Global:NetworkName -DieOnFail $true
+        }
     }
 
     # 3. Install & Start Kubeproxy
