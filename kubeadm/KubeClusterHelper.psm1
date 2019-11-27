@@ -261,7 +261,7 @@ function WaitForNetwork($NetworkName, $WaitTimeSeconds = 60, $DieOnFail = $true)
         }
         if ((Get-Service -Name FlannelD).Status -ne "Running")
         {
-            Write-Host "FlannelD service stopped unexpectecdly"
+            Write-Host "FlannelD service stopped unexpectedly"
             return $false
         }
         Write-Host "Waiting for the Network ($NetworkName) to be created by flanneld"
