@@ -301,12 +301,12 @@ function DownloadFlannelBinaries()
 {
     param(
         [Parameter(Mandatory = $false, Position = 0)]
-        [string] $Release = "0.11.0",
+        [string] $Release = "0.12.0-rc1",
         [string] $Destination = "c:\flannel"
     )
 
     Write-Host "Downloading Flannel binaries"
-    DownloadFile -Url  "https://github.com/coreos/flannel/releases/download/v${Release}/flanneld.exe" -Destination $Destination\flanneld.exe 
+    DownloadFile -Url  "https://github.com/benmoss/flannel/releases/download/v${Release}/flanneld.exe" -Destination $Destination\flanneld.exe
 }
 
 function GetKubeFlannelPath()
