@@ -35,7 +35,7 @@ function DownloadFile($destination, $source) {
 if (!$KubernetesVersion.StartsWith("v")) {
     $KubernetesVersion = "v" + $KubernetesVersion
 }
-Write-Host "Using Kubernete version: $KubernetesVersion"
+Write-Host "Using Kubernetes version: $KubernetesVersion"
 $global:Powershell = (Get-Command powershell).Source
 $global:PowershellArgs = "-ExecutionPolicy Bypass -NoProfile"
 $global:KubernetesPath = "$env:SystemDrive\k"
