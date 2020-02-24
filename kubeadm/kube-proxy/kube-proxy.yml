@@ -58,7 +58,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        image: gcr.io/cf-london-servces-k8s/windows-images/kube-proxy:latest
+        image: sigwindowstools/kube-proxy:1.17.3
         name: kube-proxy
         volumeMounts:
         - name: host
