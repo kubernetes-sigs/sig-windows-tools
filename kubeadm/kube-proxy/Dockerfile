@@ -1,9 +1,14 @@
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+ARG k8sVersion="1.17.3"
+ARG servercoreTag="ltsc2019"
+
+FROM mcr.microsoft.com/windows/servercore:${servercoreTag}
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+ARG k8sVersion
 
 RUN mkdir C:\kube-proxy; \
   pushd C:\kube-proxy; \
-  curl.exe -LO https://dl.k8s.io/v1.16.2/bin/windows/amd64/kube-proxy.exe
+  curl.exe -LO https://dl.k8s.io/v${env:k8sVersion}/bin/windows/amd64/kube-proxy.exe
 
 RUN curl.exe -Lo C:\windows\wins.exe https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
 
