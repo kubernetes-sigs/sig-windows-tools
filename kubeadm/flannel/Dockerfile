@@ -7,8 +7,8 @@ SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $P
 ARG cniVersion
 
 # Stuck on a prerelease flannel until https://github.com/coreos/flannel/issues/1231 is resolved
-RUN mkdir C:\flannel; \
-  pushd C:\flannel; \
+RUN mkdir -force C:\k\flannel; \
+  pushd C:\k\flannel; \
   curl.exe -LO https://github.com/benmoss/flannel/releases/download/v0.12.0-rc1/flanneld.exe
 
 RUN mkdir C:\cni; \

@@ -6,8 +6,8 @@ SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $P
 
 ARG k8sVersion
 
-RUN mkdir C:\kube-proxy; \
-  pushd C:\kube-proxy; \
+RUN mkdir -force C:\k\kube-proxy; \
+  pushd C:\k\kube-proxy; \
   curl.exe -LO https://dl.k8s.io/v${env:k8sVersion}/bin/windows/amd64/kube-proxy.exe
 
 RUN mkdir C:\utils; \
