@@ -14,8 +14,8 @@ data:
     mkdir -force /host/etc/cni/net.d
     mkdir -force /host/etc/kube-flannel
     mkdir -force /host/opt/cni/bin
-    mkdir -force /host/flannel
-    mkdir -force /host/flannel/var/run/secrets/kubernetes.io/serviceaccount
+    mkdir -force /host/k/flannel
+    mkdir -force /host/k/flannel/var/run/secrets/kubernetes.io/serviceaccount
 
     $cniJson = get-content /etc/kube-flannel-windows/cni-conf.json | ConvertFrom-Json
     $serviceSubnet = yq r /etc/kubeadm-config/ClusterConfiguration networking.serviceSubnet
@@ -29,10 +29,10 @@ data:
 
     cp -force /etc/kube-flannel/net-conf.json /host/etc/kube-flannel
     cp -force -recurse /cni/* /host/opt/cni/bin
-    cp -force /flannel/flanneld.exe /host/flannel/flanneld.exe
-    cp -force /kube-proxy/kubeconfig.conf /host/flannel/kubeconfig.yml
-    cp -force /var/run/secrets/kubernetes.io/serviceaccount/* /host/flannel/var/run/secrets/kubernetes.io/serviceaccount/
-    wins cli process run --path C:\flannel\flanneld.exe --args "--kube-subnet-mgr --kubeconfig-file /flannel/kubeconfig.yml" --envs "POD_NAME=$env:POD_NAME POD_NAMESPACE=$env:POD_NAMESPACE"
+    cp -force /flannel/flanneld.exe /host/k/flannel/flanneld.exe
+    cp -force /kube-proxy/kubeconfig.conf /host/k/flannel/kubeconfig.yml
+    cp -force /var/run/secrets/kubernetes.io/serviceaccount/* /host/k/flannel/var/run/secrets/kubernetes.io/serviceaccount/
+    wins cli process run --path /k/flannel/flanneld.exe --args "--kube-subnet-mgr --kubeconfig-file /k/flannel/kubeconfig.yml" --envs "POD_NAME=$env:POD_NAME POD_NAMESPACE=$env:POD_NAMESPACE"
   cni-conf.json: |
     {
       "name": "cbr0",
