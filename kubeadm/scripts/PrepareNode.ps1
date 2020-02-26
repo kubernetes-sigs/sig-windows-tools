@@ -24,7 +24,7 @@ $ErrorActionPreference = 'Stop'
 
 function DownloadFile($destination, $source) {
     Write-Host("Downloading $source to $destination")
-    curl.exe --fail -Lo $destination $source
+    curl.exe --silent --fail -Lo $destination $source
 
     if (!$?) {
         Write-Error "Download $source failed"
@@ -40,6 +40,7 @@ $global:Powershell = (Get-Command powershell).Source
 $global:PowershellArgs = "-ExecutionPolicy Bypass -NoProfile"
 $global:KubernetesPath = "$env:SystemDrive\k"
 $global:StartKubeletScript = "$global:KubernetesPath\StartKubelet.ps1"
+$global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
 $kubeletBinPath = "$global:KubernetesPath\kubelet.exe"
 
 mkdir -force "$global:KubernetesPath"
@@ -72,14 +73,13 @@ Invoke-Expression $cmd'
 Set-Content -Path $global:StartKubeletScript -Value $StartKubeletFileContent
 
 Write-Host "Installing nssm"
-$global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
 $arch = "win32"
 if ([Environment]::Is64BitOperatingSystem) {
     $arch = "win64"
 }
 
 mkdir -Force $global:NssmInstallDirectory
-curl.exe -Lo nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
+DownloadFile nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
 tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
 Remove-Item -Force .\nssm.zip
 
