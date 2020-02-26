@@ -5,7 +5,7 @@ Assists with preparing a Windows VM prior to calling kubeadm join
 .DESCRIPTION
 This script assists with joining a Windows node to a cluster.
 - Downloads Kubernetes binaries (kubelet, kubeadm) at the version specified
-- Registers wins as a service in order to run kube-proxy and cni as DaemonSets. More info here: 
+- Registers wins as a service in order to run kube-proxy and cni as DaemonSets.
 - Registers kubelet as an nssm service. More info on nssm: https://nssm.cc/
 
 .PARAMETER KubernetesVersion
@@ -50,7 +50,7 @@ DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/am
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
 DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
 
-#Create host network to allow kubelet to schedule hostNetwork pods
+# Create host network to allow kubelet to schedule hostNetwork pods
 Write-Host "Creating Docker host network"
 docker network create -d nat host
 
@@ -71,12 +71,25 @@ $cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib
 Invoke-Expression $cmd'
 Set-Content -Path $global:StartKubeletScript -Value $StartKubeletFileContent
 
-Write-Host "Registering kubelet service"
-Get-Command nssm
-if (!$?) {
-    Write-Error "NSSM is not installed."
-    exit 1
+Write-Host "Installing nssm"
+$global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
+$arch = "win32"
+if ([Environment]::Is64BitOperatingSystem) {
+    $arch = "win64"
 }
+
+mkdir -Force $global:NssmInstallDirectory
+curl.exe -Lo nssm.zip https://nssm.cc/release/nssm-2.24.zip
+tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
+Remove-Item -Force .\nssm.zip
+
+$env:path += ";$global:NssmInstallDirectory"
+$newPath = "$global:NssmInstallDirectory;" +
+[Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Machine)
+
+[Environment]::SetEnvironmentVariable("PATH", $newPath, [EnvironmentVariableTarget]::Machine)
+
+Write-Host "Registering kubelet service"
 nssm install kubelet $global:Powershell $global:PowershellArgs $global:StartKubeletScript
 nssm set kubelet DependOnService docker
 
