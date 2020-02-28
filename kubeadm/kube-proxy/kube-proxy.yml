@@ -70,7 +70,7 @@ spec:
         - mountPath: /var/lib/kube-proxy-windows
           name: kube-proxy-windows
       nodeSelector:
-        beta.kubernetes.io/os: windows
+        kubernetes.io/os: windows
       tolerations:
       - key: CriticalAddonsOnly
         operator: Exists
