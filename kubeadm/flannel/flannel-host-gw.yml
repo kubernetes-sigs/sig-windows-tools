@@ -96,11 +96,11 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: beta.kubernetes.io/os
+                  - key: kubernetes.io/os
                     operator: In
                     values:
                       - windows
-                  - key: beta.kubernetes.io/arch
+                  - key: kubernetes.io/arch
                     operator: In
                     values:
                       - amd64
