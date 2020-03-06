@@ -28,9 +28,11 @@ data:
 
     cp -force /etc/kube-flannel/net-conf.json /host/etc/kube-flannel
     cp -force -recurse /cni/* /host/opt/cni/bin
-    cp -force /k/flannel/flanneld.exe /host/k/flannel/flanneld.exe
+    cp -force /k/flannel/* /host/k/flannel/
     cp -force /kube-proxy/kubeconfig.conf /host/k/flannel/kubeconfig.yml
     cp -force /var/run/secrets/kubernetes.io/serviceaccount/* /host/k/flannel/var/run/secrets/kubernetes.io/serviceaccount/
+    wins cli process run --path /k/flannel/setup.exe --args "--mode=overlay --interface=Ethernet"
+    wins cli route add --addresses 169.254.169.254
     wins cli process run --path /k/flannel/flanneld.exe --args "--kube-subnet-mgr --kubeconfig-file /k/flannel/kubeconfig.yml" --envs "POD_NAME=$env:POD_NAME POD_NAMESPACE=$env:POD_NAMESPACE"
   cni-conf.json: |
     {
@@ -100,7 +102,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: kube-flannel
-        image: sigwindowstools/flannel:0.12.0-rc1
+        image: sigwindowstools/flannel:0.12.0-rc2
         command:
         - powershell
         args:

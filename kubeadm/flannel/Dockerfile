@@ -1,5 +1,10 @@
 ARG servercoreTag="ltsc2019"
 ARG cniVersion="0.8.5"
+ARG golangTag=windowsservercore-1809
+
+FROM golang:${golangTag} as builder
+ADD setup.go build/
+RUN go build -o build/setup.exe build/setup.go
 
 FROM mcr.microsoft.com/windows/servercore:${servercoreTag}
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
@@ -10,6 +15,9 @@ ARG cniVersion
 RUN mkdir -force C:\k\flannel; \
   pushd C:\k\flannel; \
   curl.exe -LO https://github.com/benmoss/flannel/releases/download/v0.12.0-rc1/flanneld.exe
+
+ADD hns.psm1 /k/flannel
+COPY --from=builder /gopath/build/setup.exe /k/flannel/setup.exe
 
 RUN mkdir C:\cni; \
   pushd C:\cni; \
