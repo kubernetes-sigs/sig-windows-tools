@@ -96,6 +96,12 @@ for i in $(seq 1 $NODE_COUNT); do
 		--machine-type n1-standard-4
 done
 
+# build kubectl and e2e.test
+pushd $(go env GOPATH)/src/k8s.io/kubernetes
+git checkout "$k8sVersion"
+make all WHAT="test/e2e/e2e.test cmd/kubectl"
+export PATH="$PWD/_output/bin:$PATH"
+
 # install flannel overlay & kube-proxy
 curl -sL https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml | \
 	sed 's/"Type": "vxlan"/"Type": "vxlan", "VNI": 4096, "Port": 4789/' | kubectl apply -f-
@@ -125,10 +131,6 @@ kubectl -n kube-system wait --for=condition=Ready pods --all --timeout=15m
 
 # setting this env prevents ginkgo e2e from trying to run provider setup
 export KUBERNETES_CONFORMANCE_TEST="y"
-
-pushd $(go env GOPATH)/src/k8s.io/kubernetes
-
-make all WHAT=test/e2e/e2e.test
 
 $(go env GOPATH)/src/sigs.k8s.io/windows-testing/gce/run-e2e.sh \
 	--provider=skeleton --num-nodes=$(expr $NODE_COUNT + 1) \
