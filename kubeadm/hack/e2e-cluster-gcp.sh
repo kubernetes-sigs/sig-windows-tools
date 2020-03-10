@@ -132,8 +132,19 @@ kubectl -n kube-system wait --for=condition=Ready pods --all --timeout=15m
 # setting this env prevents ginkgo e2e from trying to run provider setup
 export KUBERNETES_CONFORMANCE_TEST="y"
 
+SKIP="${SKIP:-}"
+FOCUS="${FOCUS:-"\\[Conformance\\]"}"
+# if we set PARALLEL=true, skip serial tests set --ginkgo-parallel
+if [ "${PARALLEL:-false}" = "true" ]; then
+	export GINKGO_PARALLEL=y
+	if [ -z "${SKIP}" ]; then
+		SKIP="\\[Serial\\]"
+	else
+		SKIP="\\[Serial\\]|${SKIP}"
+	fi
+fi
 $(go env GOPATH)/src/sigs.k8s.io/windows-testing/gce/run-e2e.sh \
-	--provider=skeleton --num-nodes=$(expr $NODE_COUNT + 1) \
+	--provider=skeleton --num-nodes="$NODE_COUNT" \
 	--ginkgo.focus="$FOCUS" --ginkgo.skip="$SKIP" \
 	--node-os-distro=windows --report-dir="$ARTIFACTS" \
 	--disable-log-dump=true
