@@ -35,6 +35,10 @@ mkdir -p "${ARTIFACTS}/logs"
 # disable gcloud prompts
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
+# print the gcloud version
+echo "Using gcloud version:"
+gcloud -v
+
 cleanup() {
 	gcloud compute firewall-rules list --filter network="$CLUSTER_NAME" --format "value(selfLink.basename())" | \
 		xargs gcloud compute firewall-rules delete
