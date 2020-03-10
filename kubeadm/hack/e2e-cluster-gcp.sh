@@ -133,14 +133,14 @@ kubectl -n kube-system wait --for=condition=Ready pods --all --timeout=15m
 export KUBERNETES_CONFORMANCE_TEST="y"
 
 SKIP="${SKIP:-}"
-FOCUS="${FOCUS:-"\\[Conformance\\]"}"
+FOCUS="${FOCUS:-"\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]"}"
 # if we set PARALLEL=true, skip serial tests set --ginkgo-parallel
 if [ "${PARALLEL:-false}" = "true" ]; then
 	export GINKGO_PARALLEL=y
 	if [ -z "${SKIP}" ]; then
-		SKIP="\\[Serial\\]"
+		SKIP="\\[Serial\\]|\\[LinuxOnly\\]"
 	else
-		SKIP="\\[Serial\\]|${SKIP}"
+		SKIP="\\[Serial\\]|\\[LinuxOnly\\]|${SKIP}"
 	fi
 fi
 $(go env GOPATH)/src/sigs.k8s.io/windows-testing/gce/run-e2e.sh \
