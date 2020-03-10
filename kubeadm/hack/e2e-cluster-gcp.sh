@@ -22,7 +22,7 @@ NODE_COUNT=${NODE_COUNT:-2}
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 CLUSTER_NAME=${CLUSTER_NAME:-"test-$(date +%s)"}
 ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
-scratchDir=$(mktemp -d -t $CLUSTER_NAME)
+scratchDir=$(mktemp -d)
 export KUBECONFIG="$scratchDir/kubeconfig.yml"
 
 export ARTIFACTS
