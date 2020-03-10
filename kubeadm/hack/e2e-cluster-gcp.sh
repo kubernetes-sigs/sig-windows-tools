@@ -18,6 +18,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+if [[ -n "${VERBOSE}" ]]; then
+	set -o xtrace
+fi
+
 NODE_COUNT=${NODE_COUNT:-2}
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 CLUSTER_NAME=${CLUSTER_NAME:-"test-$(date +%s)"}

@@ -21,6 +21,7 @@
 
 set -o nounset
 set -o pipefail
+set -o xtrace
 
 BOSKOS_HOST=${BOSKOS_HOST:-"boskos.test-pods.svc.cluster.local."}
 ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
@@ -42,7 +43,7 @@ echo "using boskos host to checkout project: ${BOSKOS_HOST}"
 # Check out the account from Boskos and store the produced environment
 # variables in a temporary file.
 account_env_var_file="$(mktemp)"
-python hack/checkout_account.py 1>"${account_env_var_file}"
+python ./hack/checkout_account.py 1>"${account_env_var_file}"
 checkout_account_status="${?}"
 
 # If the checkout process was a success then load the account's
@@ -63,13 +64,13 @@ fi
 # using the checked out account periodically
 ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
 mkdir -p "$ARTIFACTS/logs/"
-python -u hack/heartbeat_account.py >> "$ARTIFACTS/logs/boskos.log" 2>&1 &
+python -u ./hack/heartbeat_account.py >> "$ARTIFACTS/logs/boskos.log" 2>&1 &
 HEART_BEAT_PID=$(echo $!)
 
-hack/e2e-cluster-gcp.sh $*
+VERBOSE=1 ./hack/e2e-cluster-gcp.sh $*
 test_status="${?}"
 
 # If Boskos is being used then release the GCP project back to Boskos.
-[ -z "${BOSKOS_HOST:-}" ] || hack/checkin_account.py >> $ARTIFACTS/logs/boskos.log 2>&1
+[ -z "${BOSKOS_HOST:-}" ] || ./hack/checkin_account.py >> $ARTIFACTS/logs/boskos.log 2>&1
 
 exit "${test_status}"
