@@ -18,6 +18,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+if [[ -n "${VERBOSE}" ]]; then
+	set -o xtrace
+fi
+
 NODE_COUNT=${NODE_COUNT:-2}
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 CLUSTER_NAME=${CLUSTER_NAME:-"test-$(date +%s)"}
@@ -30,6 +34,10 @@ mkdir -p "${ARTIFACTS}/logs"
 
 # disable gcloud prompts
 export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+
+# print the gcloud version
+echo "Using gcloud version:"
+gcloud -v
 
 cleanup() {
 	gcloud compute firewall-rules list --filter network="$CLUSTER_NAME" --format "value(selfLink.basename())" | \
