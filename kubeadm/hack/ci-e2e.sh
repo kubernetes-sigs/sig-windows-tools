@@ -67,6 +67,32 @@ mkdir -p "$ARTIFACTS/logs/"
 python -u ./hack/heartbeat_account.py >> "$ARTIFACTS/logs/boskos.log" 2>&1 &
 HEART_BEAT_PID=$(echo $!)
 
+if [[ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
+	cat <<EOF
+$GOOGLE_APPLICATION_CREDENTIALS is not set.
+Please set this to the path of the service account used to run this script.
+EOF
+	exit 2
+else
+	gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
+fi
+
+if [[ -z "$GCP_PROJECT" ]]; then
+	GCP_PROJECT=$(cat ${GOOGLE_APPLICATION_CREDENTIALS} | jq -r .project_id)
+	cat <<EOF
+GCP_PROJECT is not set. Using project_id $GCP_PROJECT
+EOF
+fi
+if [[ -z "$GCP_REGION" ]]; then
+	cat <<EOF
+GCP_REGION is not set.
+Please specify which the GCP region to use.
+EOF
+	exit 2
+fi
+gcloud config set project "$GCP_PROJECT"
+gcloud config set compute/region "$GCP_REGION"
+
 VERBOSE=1 ./hack/e2e-cluster-gcp.sh $*
 test_status="${?}"
 
