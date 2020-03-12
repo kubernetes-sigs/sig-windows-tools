@@ -91,6 +91,8 @@ sed -i "s/${privateIP}/${externalIP}/g" $KUBECONFIG
 
 k8sVersion=$(kubectl version -ojson | jq -r .serverVersion.gitVersion)
 sed "s/VERSION/${k8sVersion}/" "$REPO_ROOT/kubeadm/hack/startup/windows.ps1" > $scratchDir/windows.ps1
+
+set +o xtrace
 joinCmd="$(gcloud compute ssh root@${ctrlPlaneNodeName} --command "kubeadm token create --print-join-command") --ignore-preflight-errors=IsPrivilegedUser"
 
 for i in $(seq 1 $NODE_COUNT); do
@@ -103,11 +105,14 @@ for i in $(seq 1 $NODE_COUNT); do
 		--labels=cluster="$CLUSTER_NAME" \
 		--machine-type n1-standard-4
 done
+if [[ -n "${VERBOSE}" ]]; then
+	set -o xtrace
+fi
 
 # build kubectl and e2e.test
 pushd $(go env GOPATH)/src/k8s.io/kubernetes
 git checkout "$k8sVersion"
-make all WHAT="test/e2e/e2e.test cmd/kubectl"
+make all WHAT="test/e2e/e2e.test cmd/kubectl vendor/github.com/onsi/ginkgo/ginkgo"
 export PATH="$PWD/_output/bin:$PATH"
 
 # install flannel overlay & kube-proxy
