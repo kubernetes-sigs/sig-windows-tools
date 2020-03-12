@@ -34,6 +34,10 @@ func dockerPush() error {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Println("usage: publish-kubeproxy <path to kube-proxy Dockerfile directory>")
+		os.Exit(1)
+	}
 	dockerfilePath := os.Args[1]
 	constraint, err := semver.NewConstraint(supportedVersions)
 	if err != nil {
@@ -55,11 +59,11 @@ func main() {
 		}
 		if constraint.Check(v) {
 			if err := dockerBuild(v, dockerfilePath); err != nil {
-				log.Fatalf("Error building docker image for %v: %v", v, err)
+				log.Fatalf("err building docker image for %v: %v", v, err)
 			}
 		}
 	}
 	if err := dockerPush(); err != nil {
-		log.Fatalf("Error pushing docker image: %v", err)
+		log.Fatalf("err pushing docker image: %v", err)
 	}
 }
