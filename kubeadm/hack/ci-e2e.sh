@@ -26,6 +26,7 @@ set -o xtrace
 BOSKOS_HOST=${BOSKOS_HOST:-"boskos.test-pods.svc.cluster.local."}
 ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
 GCP_REGION=${GCP_REGION:-"us-east4"}
+GCP_ZONE=${GCP_ZONE:-"us-east4-a"}
 
 # our exit handler (trap)
 cleanup() {
@@ -89,8 +90,16 @@ Please specify which the GCP region to use.
 EOF
 	exit 2
 fi
+if [[ -z "$GCP_ZONE" ]]; then
+	cat <<EOF
+GCP_ZONE is not set.
+Please specify which the GCP zone to use.
+EOF
+	exit 2
+fi
 gcloud config set project "$GCP_PROJECT"
 gcloud config set compute/region "$GCP_REGION"
+gcloud config set compute/zone "$GCP_ZONE"
 
 VERBOSE=1 ./hack/e2e-cluster-gcp.sh $*
 test_status="${?}"
