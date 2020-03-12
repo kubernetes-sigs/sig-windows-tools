@@ -1,0 +1,17 @@
+name: kube-proxy-images
+
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v2
+    - uses: azure/docker-login@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_SECRET }}
+    - name: Build
+      run: go run kubeadm/hack/publish-kubeproxy.go kubeadm/kube-proxy
