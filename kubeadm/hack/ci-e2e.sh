@@ -25,6 +25,7 @@ set -o xtrace
 
 BOSKOS_HOST=${BOSKOS_HOST:-"boskos.test-pods.svc.cluster.local."}
 ARTIFACTS="${ARTIFACTS:-${PWD}/_artifacts}"
+GCP_REGION=${GCP_REGION:-"us-east4"}
 
 # our exit handler (trap)
 cleanup() {
@@ -73,8 +74,6 @@ $GOOGLE_APPLICATION_CREDENTIALS is not set.
 Please set this to the path of the service account used to run this script.
 EOF
 	exit 2
-else
-	gcloud auth activate-service-account --key-file="${GOOGLE_APPLICATION_CREDENTIALS}"
 fi
 
 if [[ -z "$GCP_PROJECT" ]]; then
