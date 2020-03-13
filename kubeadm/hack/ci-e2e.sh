@@ -101,7 +101,7 @@ gcloud config set project "$GCP_PROJECT"
 gcloud config set compute/region "$GCP_REGION"
 gcloud config set compute/zone "$GCP_ZONE"
 
-VERBOSE=1 ./hack/e2e-cluster-gcp.sh $*
+VERBOSE=true PARALLEL=true ./hack/e2e-cluster-gcp.sh $*
 test_status="${?}"
 
 # If Boskos is being used then release the GCP project back to Boskos.
