@@ -150,6 +150,7 @@ FOCUS="${FOCUS:-"\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]"}"
 # if we set PARALLEL=true, skip serial tests set --ginkgo-parallel
 if [ "${PARALLEL:-false}" = "true" ]; then
 	export GINKGO_PARALLEL=y
+	export GINKGO_PARALLEL_NODES=4
 	SKIP="\\[Serial\\]|${SKIP}"
 fi
 $(go env GOPATH)/src/sigs.k8s.io/windows-testing/gce/run-e2e.sh \
