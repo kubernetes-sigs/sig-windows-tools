@@ -145,7 +145,7 @@ kubectl -n kube-system wait --for=condition=Ready pods --all --timeout=15m
 # setting this env prevents ginkgo e2e from trying to run provider setup
 export KUBERNETES_CONFORMANCE_TEST="y"
 
-SKIP="${SKIP:-\\[LinuxOnly\\]}"
+SKIP="${SKIP:-\\[LinuxOnly\\]|\\[Slow\\]}"
 FOCUS="${FOCUS:-"\\[Conformance\\]|\\[NodeConformance\\]|\\[sig-windows\\]"}"
 # if we set PARALLEL=true, skip serial tests set --ginkgo-parallel
 if [ "${PARALLEL:-false}" = "true" ]; then
