@@ -11,10 +11,9 @@ SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $P
 
 ARG cniVersion
 
-# Stuck on a prerelease flannel until https://github.com/coreos/flannel/issues/1231 is resolved
 RUN mkdir -force C:\k\flannel; \
   pushd C:\k\flannel; \
-  curl.exe -LO https://github.com/benmoss/flannel/releases/download/v0.12.0-rc1/flanneld.exe
+  curl.exe -LO https://github.com/coreos/flannel/releases/download/v0.12.0/flanneld.exe
 
 ADD hns.psm1 /k/flannel
 COPY --from=builder /gopath/build/setup.exe /k/flannel/setup.exe
