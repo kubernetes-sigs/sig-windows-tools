@@ -1,5 +1,10 @@
 ARG k8sVersion="v1.17.3"
 ARG servercoreTag="ltsc2019"
+ARG golangTag=windowsservercore-1809
+
+FROM golang:${golangTag} as builder
+ADD setup.go build/
+RUN go build -o build/setup.exe build/setup.go
 
 FROM mcr.microsoft.com/windows/servercore:${servercoreTag}
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
@@ -9,6 +14,9 @@ ARG k8sVersion
 RUN mkdir -force C:\k\kube-proxy; \
   pushd C:\k\kube-proxy; \
   curl.exe -sLO https://dl.k8s.io/${env:k8sVersion}/bin/windows/amd64/kube-proxy.exe
+
+ADD hns.psm1 /k/kube-proxy
+COPY --from=builder /gopath/build/setup.exe /k/kube-proxy/setup.exe
 
 RUN mkdir C:\utils; \
   curl.exe -sLo C:\utils\wins.exe https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe; \
