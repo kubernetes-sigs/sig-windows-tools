@@ -22,7 +22,7 @@ function Get-SourceVip()
 
     cd $env:CNI_PATH
     If(!(Test-Path c:\k\sourceVip.json)){
-        Get-Content c:\k\sourceVipRequest.json | .\win-overlay.exe | Out-File "c:\k\sourceVip.json"
+        Get-Content c:\k\sourceVipRequest.json | .\host-local.exe | Out-File "c:\k\sourceVip.json"
     }
 
     Remove-Item env:CNI_COMMAND
