@@ -2,7 +2,7 @@
 function Get-SourceVip()
 {
     param(
-        [parameter(Mandatory = $false)] [string] $NetworkName
+        [parameter(Mandatory = $true)] [string] $NetworkName
     )
     
     $hnsNetwork = Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()
