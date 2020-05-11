@@ -1,10 +1,10 @@
-Param(
-    [parameter(Mandatory = $true)] $NetworkName="flannel.4096"
-)
-
 # get surce vip
 function Get-SourceVip()
 {
+    param(
+        [parameter(Mandatory = $false)] [string] $NetworkName
+    )
+    
     $hnsNetwork = Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()
     $subnet = $hnsNetwork.Subnets[0].AddressPrefix
 
