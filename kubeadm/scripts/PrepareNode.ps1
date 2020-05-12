@@ -7,6 +7,7 @@ This script assists with joining a Windows node to a cluster.
 - Downloads Kubernetes binaries (kubelet, kubeadm) at the version specified
 - Registers wins as a service in order to run kube-proxy and cni as DaemonSets.
 - Registers kubelet as an nssm service. More info on nssm: https://nssm.cc/
+- User can set "NODE_IP" environment variable to configure the node IP used by kubelet.
 
 .PARAMETER KubernetesVersion
 Kubernetes version to download and use
@@ -72,8 +73,11 @@ $netId = docker network ls -f name=host --format "{{ .ID }}"
 if ($netId.Length -lt 1) {
     docker network create -d nat host
 }
-
-$cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --config=/var/lib/kubelet/config.yaml --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:1.3.0`" --enable-debugging-handlers --cgroups-per-qos=false --enforce-node-allocatable=`"`" --network-plugin=cni --resolv-conf=`"`" --log-dir=/var/log/kubelet --logtostderr=false --image-pull-progress-deadline=20m"
+$NodeIP = ""
+if ($env:NODE_IP -ne $null) {
+    $NodeIP = $env:NODE_IP
+}
+$cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --config=/var/lib/kubelet/config.yaml --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:1.3.0`" --enable-debugging-handlers --cgroups-per-qos=false --enforce-node-allocatable=`"`" --network-plugin=cni --resolv-conf=`"`" --log-dir=/var/log/kubelet --logtostderr=false --image-pull-progress-deadline=20m --node-ip=$NodeIP"
 
 Invoke-Expression $cmd'
 Set-Content -Path $global:StartKubeletScript -Value $StartKubeletFileContent
