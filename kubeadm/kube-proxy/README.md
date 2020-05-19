@@ -15,5 +15,6 @@ docker build --build-arg servercoreTag=ltsc2019 --build-arg k8sVersion=v1.18.1 -
 
 ### windows server core 1909
 ```bash
-docker build --build-arg servercoreTag=1909 --build-arg k8sVersion=v1.18.1 --build-arg golangTag=windowsservercore-1909 -t flannel:0.12.0-windowsservercore-1909 .
+docker build --build-arg servercoreTag=1909 --build-arg k8sVersion=v1.18.1 --build-arg golangTag=windowsservercore-1909 -t kube-proxy:v1.18.1-windowsservercore-1909 .
+
 ```
