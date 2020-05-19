@@ -33,7 +33,7 @@ data:
     cp -force /var/run/secrets/kubernetes.io/serviceaccount/* /host/k/flannel/var/run/secrets/kubernetes.io/serviceaccount/
     wins cli process run --path /k/flannel/setup.exe --args "--mode=overlay --interface=Ethernet"
     wins cli route add --addresses 169.254.169.254
-    wins cli process run --path /k/flannel/flanneld.exe --args "--kube-subnet-mgr --kubeconfig-file /k/flannel/kubeconfig.yml" --envs "POD_NAME=$env:POD_NAME POD_NAMESPACE=$env:POD_NAMESPACE"
+    wins cli process run --path /k/flannel/flanneld.exe --args "--ip-masq --kube-subnet-mgr --kubeconfig-file /k/flannel/kubeconfig.yml" --envs "POD_NAME=$env:POD_NAME POD_NAMESPACE=$env:POD_NAMESPACE"
   cni-conf.json: |
     {
       "name": "flannel.4096",
