@@ -10,18 +10,24 @@ import (
 
 func setupOverlay(interfaceName string) {
 	run(fmt.Sprintf(`ipmo C:\k\flannel\hns.psm1; `+
-                `if ((Get-HNSNetwork | ?{ ($_.Type -eq "Overlay") -and ($_.Name -eq "External") }) -eq $null) { `+
-                `New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" `+
-		`-Gateway "192.168.255.1" -Name "External" -AdapterName "%s" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; }); }`,
+                `$network = Get-HNSNetwork | ? Name -eq "External" `+
+                `if ($network -eq $null) { `+
+                `New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -AdapterName "%s" -SubnetPolicies @(@{Type = "VSID"; VSID = 9999; }); `+
+                `} elseif ($network.Type -ne "Overlay") { `+
+                `Write-Warning "'External' network already exists but has wrong type: $($network.Type)." `+
+                `}`,
 		interfaceName),
 	)
 }
 
 func setupL2bridge(interfaceName string) {
 	run(fmt.Sprintf(`ipmo C:\k\flannel\hns.psm1; `+
-                `if ((Get-HNSNetwork | ?{ ($_.Type -eq "Overlay") -and ($_.Name -eq "External") }) -eq $null) { `+
-                `New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" `+
-		`-Gateway "192.168.255.1" -Name "External" -AdapterName "%s"; }`,
+                `$network = Get-HNSNetwork | ? Name -eq "External" `+
+                `if ($network -eq $null) { `+
+                `New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -AdapterName "%s"; `+
+                `} elseif ($network.Type -ne "Overlay") { `+
+                `Write-Warning "'External' network already exists but has wrong type: $($network.Type)." `+
+                `}`,
 		interfaceName),
 	)
 }
