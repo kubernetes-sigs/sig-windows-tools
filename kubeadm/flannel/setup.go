@@ -22,7 +22,7 @@ func setupOverlay(interfaceName string) {
 
 func setupL2bridge(interfaceName string) {
 	run(fmt.Sprintf(`ipmo C:\k\flannel\hns.psm1; `+
-                `$network = Get-HNSNetwork | ? Name -eq "External" `+
+                `$network = Get-HNSNetwork | ? Name -eq "External"; `+
                 `if ($network -eq $null) { `+
                 `New-HNSNetwork -Type Overlay -AddressPrefix "192.168.255.0/30" -Gateway "192.168.255.1" -Name "External" -AdapterName "%s"; `+
                 `} elseif ($network.Type -ne "Overlay") { `+
