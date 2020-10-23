@@ -76,7 +76,7 @@ spec:
       serviceAccountName: kube-proxy
       containers:
       - command:
-        - powershell
+        - pwsh
         args:
         - -file
         - /var/lib/kube-proxy-windows/run-script.ps1
