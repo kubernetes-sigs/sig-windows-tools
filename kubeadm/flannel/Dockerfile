@@ -13,7 +13,7 @@ ARG cniVersion
 
 RUN mkdir -force C:\k\flannel; \
   pushd C:\k\flannel; \
-  curl.exe -LO https://github.com/coreos/flannel/releases/download/v0.12.0/flanneld.exe
+  curl.exe -LO https://github.com/coreos/flannel/releases/download/v0.13.0/flanneld.exe
 
 ADD hns.psm1 /k/flannel
 COPY --from=builder /gopath/build/setup.exe /k/flannel/setup.exe
