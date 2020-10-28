@@ -58,10 +58,6 @@ Describe "Docker is installed" {
 
     It "Should be a supported version" {
         $supportedVersions = @(
-            "18.09.1",
-            "18.09.2",
-            "18.09.3",
-            "18.09.4",
             "19.03*"
         )
         $supportedVersions -contains $global:DockerVersion.Server.Version | Should Be $true
