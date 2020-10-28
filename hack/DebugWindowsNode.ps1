@@ -10,8 +10,8 @@ Write-Output "Container Host OS Build Label: $OSBuildLabel"
 
 Describe "Windows Version and Prerequisites" {
     $buildNumber = (Get-CimInstance -Namespace root\cimv2 Win32_OperatingSystem).BuildNumber
-    It "Is Windows Server 2019" {
-        $buildNumber -eq 17763 | Should Be $true
+    It "Is Windows Server 2019 (or higher)" {
+        $buildNumber -ge 17763 | Should Be $true
     }
 
     It "Has 'Containers' feature installed" {
