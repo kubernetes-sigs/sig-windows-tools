@@ -1,5 +1,5 @@
 Write-Output "Checking for common problems with Windows Kubernetes nodes"
-Î
+
 $global:DockerVersion = $null
 
 $currentVersion = Get-Item 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
