@@ -65,7 +65,7 @@ mkdir -force C:\etc\kubernetes\pki
 New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
 
 $StartKubeletFileContent = '$FileContent = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
-$global:KubeletArgs = $FileContent.Trim("KUBELET_KUBEADM_ARGS=`"")
+$global:KubeletArgs = $FileContent.TrimStart('KUBELET_KUBEADM_ARGS=').Trim('"')
 
 $netId = docker network ls -f name=host --format "{{ .ID }}"
 
