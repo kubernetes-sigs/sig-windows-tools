@@ -17,15 +17,34 @@ data:
     mkdir -force /host/k/flannel
     mkdir -force /host/k/flannel/var/run/secrets/kubernetes.io/serviceaccount
 
-    $cniJson = get-content /etc/kube-flannel-windows/cni-conf.json | ConvertFrom-Json
+    $containerRuntime = "docker"
+    if (Test-Path /host/etc/cni/net.d/0-containerd-nat.json) {
+      $containerRuntime = "containerd"
+    }
+
+    Write-Host "Configuring CNI for $containerRuntime"
+
     $serviceSubnet = yq r /etc/kubeadm-config/ClusterConfiguration networking.serviceSubnet
     $podSubnet = yq r /etc/kubeadm-config/ClusterConfiguration networking.podSubnet
     $networkJson = wins cli net get | convertfrom-json
 
-    $cniJson.delegate.policies[0].Value.ExceptionList = $serviceSubnet, $podSubnet, $networkJson.SubnetCIDR
-    $cniJson.delegate.policies[1].Value.DestinationPrefix = $serviceSubnet
-    $cniJson.delegate.policies[2].Value.DestinationPrefix = $networkJson.AddressCIDR
-    Set-Content -Path /host/etc/cni/net.d/10-flannel.conf ($cniJson | ConvertTo-Json -depth 100)
+    if ($containerRuntime -eq "docker") {
+      $cniJson = get-content /etc/kube-flannel-windows/cni-conf.json | ConvertFrom-Json
+
+      $cniJson.delegate.policies[0].Value.ExceptionList = $serviceSubnet, $podSubnet, $networkJson.SubnetCIDR
+      $cniJson.delegate.policies[1].Value.DestinationPrefix = $serviceSubnet
+      $cniJson.delegate.policies[2].Value.DestinationPrefix = $networkJson.AddressCIDR
+
+      Set-Content -Path /host/etc/cni/net.d/10-flannel.conf ($cniJson | ConvertTo-Json -depth 100)
+    } elseif ($containerRuntime -eq "containerd") {
+      $cniJson = get-content /etc/kube-flannel-windows/cni-conf-containerd.json | ConvertFrom-Json
+
+      $cniJson.delegate.AdditionalArgs[0].Value.Settings.Exceptions = $serviceSubnet, $podSubnet, $networkJson.SubnetCIDR
+      $cniJson.delegate.AdditionalArgs[1].Value.Settings.DestinationPrefix = $serviceSubnet
+      $cniJson.delegate.AdditionalArgs[2].Value.Settings.DestinationPrefix = $networkJson.AddressCIDR
+
+      Set-Content -Path /host/etc/cni/net.d/10-flannel.conf ($cniJson | ConvertTo-Json -depth 100)
+    }
 
     cp -force /etc/kube-flannel/net-conf.json /host/etc/kube-flannel
     cp -force -recurse /cni/* /host/opt/cni/bin
@@ -69,6 +88,53 @@ data:
               "Type": "ROUTE",
               "DestinationPrefix": "",
               "NeedEncap": true
+            }
+          }
+        ]
+      }
+    }
+  cni-conf-containerd.json: |
+    {
+      "cniVersion": "0.2.0",
+      "name": "cbr0",
+      "type": "flannel",
+      "capabilities": {
+        "portMappings": true,
+        "dns": true
+      },
+      "delegate": {
+        "type": "sdnbridge",
+        "optionalFlags" : {
+          "forceBridgeGateway" : true
+        },
+        "AdditionalArgs": [
+          {
+            "Name": "EndpointPolicy",
+            "Value": {
+              "Type": "OutBoundNAT",
+              "Settings": {
+                "Exceptions": []
+              }
+            }
+          },
+          {
+            "Name": "EndpointPolicy",
+            "Value": {
+              "Type": "SDNROUTE",
+              "Settings": {
+                "DestinationPrefix": "",
+                "NeedEncap": true
+              }
+            }
+          },
+          {
+            "Name": "EndpointPolicy",
+            "Value": {
+              "Type": "SDNROUTE",
+              "Settings": {
+                "DestinationPrefix": "",
+                "NeedEncap": true
+              }
             }
           }
         ]
