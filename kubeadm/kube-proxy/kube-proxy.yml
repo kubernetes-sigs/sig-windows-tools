@@ -32,6 +32,11 @@ data:
     cp -force /var/lib/kube-proxy/* /host/var/lib/kube-proxy
     cp -force /var/run/secrets/kubernetes.io/serviceaccount/* /host/var/lib/kube-proxy/var/run/secrets/kubernetes.io/serviceaccount #FIXME?
 
+    # If live patching kube-proxy, make sure and patch it inside this container, so that the SHA
+    # matches that of what is on the host. i.e. uncomment the below line...
+    # wget <download-path-to-kube-proxy.exe> -outfile k/kube-proxy/kube-proxy.exe
+    cp -force /k/kube-proxy/* /host/k/kube-proxy
+
     $cniConfFile = Get-NetConfFile
     $networkName = (Get-Content "/host/etc/cni/net.d/$cniConfFile" | ConvertFrom-Json).name
     $sourceVip = ($env:POD_IP -split "\.")[0..2] + 0 -join "."
@@ -39,6 +44,9 @@ data:
     yq w -i /host/var/lib/kube-proxy/config.conf winkernel.networkName $networkName
     yq w -i /host/var/lib/kube-proxy/config.conf featureGates.WinOverlay true
     yq w -i /host/var/lib/kube-proxy/config.conf mode "kernelspace"
+    
+    # Start the kube-proxy as a wins process on the host.
+    # Note that this will rename kube-proxy.exe to rancher-wins-kube-proxy.exe on the host!
     wins cli process run --path /k/kube-proxy/kube-proxy.exe --args "--v=6 --config=/var/lib/kube-proxy/config.conf --hostname-override=$env:NODE_NAME --feature-gates=WinOverlay=true"
 
 kind: ConfigMap
