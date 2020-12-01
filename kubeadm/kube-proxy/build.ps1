@@ -32,7 +32,7 @@ function Build-KubeProxy([string]$tag)
 
     if ($push.IsPresent)
     {
-        Add-Manifest -name "$($image):$tag" -items $items -bases $bases
+        Push-Manifest -name "$($image):$tag" -items $items -bases $bases
     }
 
     Write-Host

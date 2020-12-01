@@ -29,7 +29,7 @@ foreach ($flannel in $config.flannel)
 
     if ($push.IsPresent)
     {
-        Add-Manifest -name "$($image):$flannel" -items $items -bases $bases
+        Push-Manifest -name "$($image):$flannel" -items $items -bases $bases
     }
 
     Write-Host

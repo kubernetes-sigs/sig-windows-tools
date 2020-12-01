@@ -26,7 +26,7 @@ function New-Build()
     Invoke-Expression $command
 }
 
-function Add-Manifest([string]$name, [string[]]$items, [string[]]$bases)
+function Push-Manifest([string]$name, [string[]]$items, [string[]]$bases)
 {
     $command = "docker manifest create $name";
     foreach($item in $items)
@@ -55,4 +55,4 @@ function Add-Manifest([string]$name, [string[]]$items, [string[]]$bases)
 
 Export-ModuleMember Set-Builder
 Export-ModuleMember New-Build
-Export-ModuleMember Add-Manifest
+Export-ModuleMember Push-Manifest
