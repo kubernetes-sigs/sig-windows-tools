@@ -25,7 +25,7 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       run: |
         echo ${{ secrets.DOCKER_SECRET }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-        $gittag = ($env:GITHUB_REF -split '/' | select-object -skip 2) -join '/'
+        $gittag = '-'+(($env:GITHUB_REF -split '/' | select-object -skip 2) -join '-')
         ./build.ps1 -push -tagSuffix $gittag
     - name: Build images (without push)
       if: ${{ github.event_name == 'pull_request' }}
