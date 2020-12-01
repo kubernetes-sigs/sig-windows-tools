@@ -15,31 +15,31 @@ if ($push.IsPresent) {
 Import-Module "../buildx.psm1"
 Set-Builder
 
-function Build-KubeProxy([string]$tag) 
+function Build-KubeProxy([string]$version) 
 {
     $config = Get-Content ".\buildconfig.json" | ConvertFrom-Json
-    $base = $config.baseimage
 
     [string[]]$items = @()
     [string[]]$bases = @()
-    foreach($map in $config.tagsMap) 
+    foreach($tag in $config.tagsMap) 
     {
-        $bases += "$($base):$($map.source)"
-        $current = "$($image):$tag-$($map.target)"
+        $base = "$($config.baseimage):$($tag.source)"
+        $current = "$($image):$($version)-$($tag.target)"
+        $bases += $base
         $items += $current
-        New-Build -name $current -output $output -args @("BASE=$($base):$($map.source)", "k8sVersion=$tag")
+        New-Build -name $current -output $output -args @("BASE=$base", "k8sVersion=$version")
     }
 
     if ($push.IsPresent)
     {
-        Push-Manifest -name "$($image):$tag" -items $items -bases $bases
+        Push-Manifest -name "$($image):$version" -items $items -bases $bases
     }
 }
 
-$tags = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
-foreach($tag in $tags)
+$versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
+foreach($version in $versions)
 {
-    if ($tag -match "^v(\d+)\.(\d+)\.(\d+)$")
+    if ($version -match "^v(\d+)\.(\d+)\.(\d+)$")
     {
         [int]$major = $Matches[1]
         [int]$minor = $Matches[2]
@@ -47,7 +47,7 @@ foreach($tag in $tags)
 
         if (($major -gt $minMajor) -or ($major -eq $minMajor -and $minor -gt $minMinor) -or ($major -eq $minMajor -and $minor -eq $minMinor -and $build -ge $minBuild))
         {
-            Build-KubeProxy -tag $tag
+            Build-KubeProxy -version $version
         }
     }
 }

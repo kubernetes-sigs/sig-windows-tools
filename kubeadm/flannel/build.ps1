@@ -1,6 +1,7 @@
 param(
     [switch] $push, 
-    [string] $image = "sigwindowstools/flannel"
+    [string] $image = "sigwindowstools/flannel",
+    [string] $tagSuffix = ""
 )
 
 $output="docker"
@@ -12,23 +13,23 @@ Import-Module "../buildx.psm1"
 Set-Builder
 
 $config = Get-Content .\buildconfig.json | ConvertFrom-Json
-$base = $config.baseimage # should be `mcr.microsoft.com/powershell`
 foreach ($flannel in $config.flannel)
 {
     Write-Host "Build images for flannel version: $flannel"
 
     [string[]]$items = @()
     [string[]]$bases = @()
-    foreach($map in $config.tagsMap) 
+    foreach($tag in $config.tagsMap) 
     {
-        $bases += "$($base):$($map.source)"
-        $current = "$($image):$flannel-$($map.target)"
+        $base = "$($config.baseimage):$($tag.source)"
+        $current = "$($image):v$($flannel)-$($tag.target)$($tagSuffix)"
+        $bases += $base
         $items += $current
-        New-Build -name $current -output $output -args @("BASE=$($base):$($map.source)", "flannelVersion=$flannel")
+        New-Build -name $current -output $output -args @("BASE=$base", "flannelVersion=$flannel")
     }
 
     if ($push.IsPresent)
     {
-        Push-Manifest -name "$($image):$flannel" -items $items -bases $bases
+        Push-Manifest -name "$($image):v$flannel" -items $items -bases $bases
     }
 }
