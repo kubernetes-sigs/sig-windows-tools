@@ -23,6 +23,7 @@ function New-Build()
         $command = "$command --build-arg=$arg"
     }
     $command = "$command ."
+    Write-Host $command
     Invoke-Expression $command
 }
 
@@ -33,6 +34,7 @@ function Push-Manifest([string]$name, [string[]]$items, [string[]]$bases)
     {
         $command = "$command --amend $item"
     }
+    Write-Host $command
     Invoke-Expression $command
 
     for ($i = 0; $i -lt $items.Length; $i++) {
