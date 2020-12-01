@@ -2,12 +2,8 @@ name: flannel-images
 
 on:
   push:
-    paths:
-      - "kubeadm/flannel/**"
-      - "kubeadm/buildx.psm1"
-      - ".github/workflows/flannel.yml"
-    branches:
-      - master
+    tags:
+      - v*
   pull_request:
     paths:
       - "kubeadm/flannel/**"
@@ -29,7 +25,7 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       run: |
         echo ${{ secrets.DOCKER_SECRET }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-        ./build.ps1 -push
+        ./build.ps1 -push -tagSuffix $env:GITHUB_SHA
     - name: Build images (without push)
       if: ${{ github.event_name == 'pull_request' }}
       run: |
