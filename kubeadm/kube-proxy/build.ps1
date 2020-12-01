@@ -34,8 +34,6 @@ function Build-KubeProxy([string]$tag)
     {
         Push-Manifest -name "$($image):$tag" -items $items -bases $bases
     }
-
-    Write-Host
 }
 
 $tags = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags

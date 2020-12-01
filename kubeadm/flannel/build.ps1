@@ -31,6 +31,4 @@ foreach ($flannel in $config.flannel)
     {
         Push-Manifest -name "$($image):$flannel" -items $items -bases $bases
     }
-
-    Write-Host
 }
