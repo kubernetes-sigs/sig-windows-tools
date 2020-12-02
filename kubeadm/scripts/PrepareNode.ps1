@@ -74,7 +74,9 @@ if ($ContainerRuntime -eq "Docker") {
     # NOTE: For containerd the 0-containerd-nat.json network config template added by
     # Install-containerd.ps1 joins pods to the host network.
     Write-Host "Creating Docker host network"
-    docker network create -d nat host
+    if (docker network ls -f name=host --format "{{ .ID }}") {
+        docker network create -d nat host
+    }
 } elseif ($ContainerRuntime -eq "containerD") {
     DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
     Import-Module "c:\k\hns.psm1"
