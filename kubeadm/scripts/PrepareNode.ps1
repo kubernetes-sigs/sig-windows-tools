@@ -64,7 +64,11 @@ mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
-DownloadFile "$global:KubernetesPath\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
+if (-not (Test-Path "$global:KubernetesPath\hns.psm1")) {
+   DownloadFile "$global:KubernetesPath\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
+} else {
+    Write-Host "hns.psm1 has been already downloaded"
+}
 
 if (-not (Get-Service rancher-wins -ErrorAction Ignore)) {
     DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
