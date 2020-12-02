@@ -12,13 +12,17 @@ if (Get-Service docker -ErrorAction Ignore) {
 if (Get-Service containerd -ErrorAction Ignore) {
     Restart-Service containerd
 }
-del /etc -Recurse -Force
-del /opt -Recurse -Force
-del /run -Recurse -Force
-del /var -Recurse -Force
-del /k/flannel -Recurse -Force
-del /k/kube-proxy -Recurse -Force
-del /k/*.exe
-del /k/StartKubelet.ps1
+Stop-Process -Name rancher-wins* -Force
 Get-HnsNetwork | ?{ $_.type -eq "L2Bridge" } | Remove-HnsNetwork
 Get-HnsNetwork | ?{ $_.type -eq "Overlay" } | Remove-HnsNetwork
+
+del /etc -Recurse -Force | out-null
+del /opt -Recurse -Force | out-null
+del /run -Recurse -Force | out-null
+cmd /c rmdir c:\var /S /Q | out-null
+del /k/flannel -Recurse -Force | out-null
+del /k/kube-proxy -Recurse -Force | out-null
+del /k/*.exe | out-null
+del /k/StartKubelet.ps1 | out-null
+
+Write-Host "Please restart computer to complete node cleanup."
