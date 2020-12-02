@@ -64,6 +64,7 @@ mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
+DownloadFile "$global:KubernetesPath\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
 DownloadFile "$global:KubernetesPath\kubelet.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
 
@@ -72,22 +73,8 @@ if (-not (Get-Service rancher-wins -ErrorAction Ignore)) {
     Write-Host "Registering wins service"
     wins.exe srv app run --register
     Start-Service rancher-wins
-}
-
-if ($ContainerRuntime -eq "Docker") {
-    # Create host network to allow kubelet to schedule hostNetwork pods
-    # NOTE: For containerd the 0-containerd-nat.json network config template added by
-    # Install-containerd.ps1 joins pods to the host network.
-    Write-Host "Creating Docker host network"
-    if (docker network ls -f name=host --format "{{ .ID }}") {
-        docker network create -d nat host
-    }
-} elseif ($ContainerRuntime -eq "containerD") {
-    DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
-    Import-Module "c:\k\hns.psm1"
-    if (-not (Get-HnsNetwork | ? Name -eq "nat")) {
-        New-HnsNetwork -Type NAT -Name nat
-    }
+} else {
+    Write-Host "wins has been already installed"
 }
 
 mkdir -force C:\var\log\kubelet
@@ -101,10 +88,16 @@ $global:KubeletArgs = $FileContent.TrimStart(''KUBELET_KUBEADM_ARGS='').Trim(''"
 $global:containerRuntime = {{CONTAINER_RUNTIME}}
 
 if ($global:containerRuntime -eq "Docker") {
-    $netId = docker network ls -f name=host --format "{{ .ID }}"
-
-    if ($netId.Length -lt 1) {
-    docker network create -d nat host
+    # Create host network to allow kubelet to schedule hostNetwork pods
+    if (docker network ls -f name=host --format "{{ .ID }}") {
+        docker network create -d nat host
+    }
+} elseif ($global:containerRuntime -eq "containerD") {
+    # NOTE: For containerd the 0-containerd-nat.json network config template added by
+    # Install-containerd.ps1 joins pods to the host network.
+    Import-Module "c:\k\hns.psm1"
+    if (-not (Get-HnsNetwork | ? Name -eq "nat")) {
+        New-HnsNetwork -Type NAT -Name nat
     }
 }
 
