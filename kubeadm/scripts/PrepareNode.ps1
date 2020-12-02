@@ -74,11 +74,11 @@ if (-not (Test-Path "$global:KubernetesPath\hns.psm1")) {
 
 if (-not (Get-Service rancher-wins -ErrorAction Ignore)) {
     DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
-    Write-Host "Registering wins service"
+    Write-Host "Registering rancher-wins service"
     wins.exe srv app run --register
     Start-Service rancher-wins
 } else {
-    Write-Host "wins has been already installed"
+    Write-Host "rancher-wins has been already installed"
 }
 
 if (-not (Test-Path "$global:NssmInstallDirectory\nssm.exe")) {
@@ -98,13 +98,13 @@ if (-not (Test-Path "$global:NssmInstallDirectory\nssm.exe")) {
     [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Machine)
     [Environment]::SetEnvironmentVariable("PATH", $newPath, [EnvironmentVariableTarget]::Machine)
 } else {
-    Write-Host "nssm.exe has been already installed"
+    Write-Host "nssm has been already installed"
 }
 
 if (-not (Test-Path "$global:KubernetesPath\kubeadm.exe")) {
     DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
 } else {
-    Write-Host "kubeadm.exe has been already installed"
+    Write-Host "kubeadm has been already downloaded"
 }
 
 if (-not (Get-Service kubelet -ErrorAction Ignore)) {
@@ -122,7 +122,7 @@ if (-not (Get-Service kubelet -ErrorAction Ignore)) {
 
     if ($global:containerRuntime -eq "Docker") {
         # Create host network to allow kubelet to schedule hostNetwork pods
-        if (docker network ls -f name=host --format "{{ .ID }}") {
+        if (-not (docker network ls -f name=host --format "{{ .ID }}")) {
             docker network create -d nat host
         }
     } elseif ($global:containerRuntime -eq "containerD") {
