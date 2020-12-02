@@ -36,7 +36,7 @@ function Build-KubeProxy([string]$version)
 $versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
 foreach($version in $versions)
 {
-    if ($kubeProxyTag -match "^v(\d+\.\d+\.\d+)$")
+    if ($version -match "^v(\d+\.\d+\.\d+)$")
     {
         $testVersion = [version]$Matches[1]
         if ($testVersion -ge $minVersion)
