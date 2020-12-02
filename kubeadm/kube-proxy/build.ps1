@@ -1,11 +1,8 @@
 param(
     [string]$image = "sigwindowstools/kube-proxy",
-    [switch]$push
+    [switch]$push,
+    [version]$minVersion = "1.17.0"
 )
-
-[int]$minMajor = 1
-[int]$minMinor = 17
-[int]$minBuild = 0
 
 $output="docker"
 if ($push.IsPresent) {
@@ -39,15 +36,21 @@ function Build-KubeProxy([string]$version)
 $versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
 foreach($version in $versions)
 {
-    if ($version -match "^v(\d+)\.(\d+)\.(\d+)$")
+    if ($kubeProxyTag -match "^v(\d+\.\d+\.\d+)$")
     {
-        [int]$major = $Matches[1]
-        [int]$minor = $Matches[2]
-        [int]$build = $Matches[3]
-
-        if (($major -gt $minMajor) -or ($major -eq $minMajor -and $minor -gt $minMinor) -or ($major -eq $minMajor -and $minor -eq $minMinor -and $build -ge $minBuild))
+        $testVersion = [version]$Matches[1]
+        if ($testVersion -ge $minVersion)
         {
+            Write-Host "Build $($image):$($version)"
             Build-KubeProxy -version $version
         }
+        else
+        {
+            Write-Host "Skip $version because it less than $minVersion."
+        }
+    }
+    else
+    {
+        Write-Host "Skip $version because it isn't release version."
     }
 }
