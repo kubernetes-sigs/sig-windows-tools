@@ -59,15 +59,20 @@ $global:PowershellArgs = "-ExecutionPolicy Bypass -NoProfile"
 $global:KubernetesPath = "$env:SystemDrive\k"
 $global:StartKubeletScript = "$global:KubernetesPath\StartKubelet.ps1"
 $global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
-$kubeletBinPath = "$global:KubernetesPath\kubelet.exe"
 
 mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
-DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
+DownloadFile "$global:KubernetesPath\kubelet.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
-DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
+
+if (-not (Get-Service rancher-wins -ErrorAction Ignore)) {
+    DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
+    Write-Host "Registering wins service"
+    wins.exe srv app run --register
+    Start-Service rancher-wins
+}
 
 if ($ContainerRuntime -eq "Docker") {
     # Create host network to allow kubelet to schedule hostNetwork pods
@@ -84,10 +89,6 @@ if ($ContainerRuntime -eq "Docker") {
         New-HnsNetwork -Type NAT -Name nat
     }
 }
-
-Write-Host "Registering wins service"
-wins.exe srv app run --register
-start-service rancher-wins
 
 mkdir -force C:\var\log\kubelet
 mkdir -force C:\var\lib\kubelet\etc\kubernetes
