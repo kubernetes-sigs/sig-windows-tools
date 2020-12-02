@@ -78,8 +78,9 @@ if ($ContainerRuntime -eq "Docker") {
 } elseif ($ContainerRuntime -eq "containerD") {
     DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
     Import-Module "c:\k\hns.psm1"
-    # TODO(marosset): check if network already exists before creatation
-    New-HnsNetwork -Type NAT -Name nat
+    if (-not (Get-HnsNetwork | ? Name -eq "nat")) {
+        New-HnsNetwork -Type NAT -Name nat
+    }
 }
 
 Write-Host "Registering wins service"
