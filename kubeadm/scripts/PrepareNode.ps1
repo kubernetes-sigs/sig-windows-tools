@@ -60,12 +60,14 @@ $global:KubernetesPath = "$env:SystemDrive\k"
 $global:StartKubeletScript = "$global:KubernetesPath\StartKubelet.ps1"
 $global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
 
-mkdir -force "$global:KubernetesPath"
+if (-not (Test-Path "$global:KubernetesPath")) {
+    mkdir -force "$global:KubernetesPath"
+}
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
 if (-not (Test-Path "$global:KubernetesPath\hns.psm1")) {
-   DownloadFile "$global:KubernetesPath\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
+    DownloadFile "$global:KubernetesPath\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
 } else {
     Write-Host "hns.psm1 has been already downloaded"
 }
@@ -86,7 +88,7 @@ if (-not (Test-Path "$global:NssmInstallDirectory\nssm.exe")) {
         $arch = "win64"
     }
 
-    mkdir -Force $global:NssmInstallDirectory
+    mkdir -Force $global:NssmInstallDirectory | Out-Null
     DownloadFile nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
     tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
     Remove-Item -Force .\nssm.zip
