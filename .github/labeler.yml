@@ -1,0 +1,3 @@
+# Add 'tide/merge-method-squash' to ALL pull requestsL
+tide/merge-method-squash:
+  - *
