@@ -27,8 +27,26 @@ function New-Build()
     Invoke-Expression $command
 }
 
+function Get-ManifestName([string]$name)
+{
+    if (($name -split "/").Length -eq 1) {
+        $name = "library/$name"
+    }
+    if (($name -split "/").Length -eq 2) {
+        $name = "docker.io/$name"
+    }
+    return ($name -replace "/", "_") -replace ":", "-"
+}
+
 function Push-Manifest([string]$name, [string[]]$items, [string[]]$bases)
 {
+    $folder = Get-ManifestName -name $name
+    if (Test-Path "~/.docker/manifests/$folder")
+    {
+        Write-Warning "Manifest $name already exists and will be overridden."
+        & docker manifest rm $name | out-null
+    }
+
     $command = "docker manifest create $name";
     foreach($item in $items)
     {
@@ -46,8 +64,7 @@ function Push-Manifest([string]$name, [string[]]$items, [string[]]$bases)
         $manifest = $(docker manifest inspect $base -v) | ConvertFrom-Json
         $platform = $manifest.Descriptor.platform
 
-        $folder = ("docker.io/$name" -replace "/", "_") -replace ":", "-"
-        $img = ("docker.io/$item" -replace "/", "_") -replace ":", "-"
+        $img = Get-ManifestName -name $item
     
         $manifest = Get-Content "~/.docker/manifests/$folder/$img" | ConvertFrom-Json
         $manifest.Descriptor.platform = $platform
