@@ -1,7 +1,7 @@
 function Set-Builder()
 {
     $env:DOCKER_CLI_EXPERIMENTAL = "enabled"
-    & docker buildx create --name img-builder --use
+    & docker buildx create --name img-builder --use --driver docker-container --driver-opt image=moby/buildkit:v0.7.2
 }
 
 function New-Build()
