@@ -57,13 +57,12 @@ Describe "Docker is installed" {
     }
 
     It "Should be a supported version" {
-        $supportedVersions = @(
-            "19.03*",
-            "19.04*",
-            "19.1*",
-            "20*"
-        )
-        $supportedVersions -contains $global:DockerVersion.Server.Version | Should Be $true
+        $supported = $false
+        if ($global:DockerVersion.Server.Version -match "\d+\.\d+\.\d+") {
+             $dockerVersion = [version]$Matches[0]
+             $supported = $dockerVersion -ge [version]"19.3.0"
+        }
+        $supported | Should Be $true
     }
 }
 
