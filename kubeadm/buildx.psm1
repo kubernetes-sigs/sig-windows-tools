@@ -37,6 +37,8 @@ function Push-Manifest([string]$name, [string[]]$items, [string[]]$bases)
     Write-Host $command
     Invoke-Expression $command
 
+    # Use `docker manifest annotate` instead of this when docker cli 20.* is ready.
+    # See details: https://github.com/docker/cli/pull/2578
     for ($i = 0; $i -lt $items.Length; $i++) {
         $base = $bases[$i]
         $item = $items[$i]
