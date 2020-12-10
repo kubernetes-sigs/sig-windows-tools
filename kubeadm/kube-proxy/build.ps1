@@ -29,7 +29,7 @@ function Build-KubeProxy([string]$version)
 
     if ($push.IsPresent)
     {
-        Push-Manifest -name "$($image):$version" -items $items -bases $bases
+        Push-Manifest -name "$($image):$version-nanoserver" -items $items -bases $bases
     }
 }
 

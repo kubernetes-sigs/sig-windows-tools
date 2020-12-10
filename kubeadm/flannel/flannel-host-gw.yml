@@ -179,7 +179,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: kube-flannel
-        image: sigwindowstools/flannel:v0.13.0
+        image: sigwindowstools/flannel:v0.13.0-nanoserver
         command:
         - pwsh
         args:

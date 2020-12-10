@@ -30,6 +30,6 @@ foreach ($flannel in $config.flannel)
 
     if ($push.IsPresent)
     {
-        Push-Manifest -name "$($image):v$flannel" -items $items -bases $bases
+        Push-Manifest -name "$($image):v$flannel-nanoserver" -items $items -bases $bases
     }
 }
