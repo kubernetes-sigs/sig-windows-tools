@@ -76,7 +76,7 @@ spec:
       serviceAccountName: kube-proxy
       containers:
       - command:
-        - powershell
+        - pwsh
         args:
         - -file
         - /var/lib/kube-proxy-windows/run-script.ps1
@@ -90,7 +90,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        image: sigwindowstools/kube-proxy:VERSION
+        image: sigwindowstools/kube-proxy:VERSION-nanoserver
         name: kube-proxy
         volumeMounts:
         - name: host

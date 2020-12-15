@@ -1,30 +1,39 @@
-ARG servercoreTag="ltsc2019"
-ARG cniVersion="0.8.5"
-ARG golangTag=windowsservercore-1809
+ARG BASE="mcr.microsoft.com/powershell:nanoserver-1809"
+ARG cniVersion="0.8.7"
+ARG flannelVersion="0.13.0"
 
-FROM golang:${golangTag} as builder
-ADD setup.go build/
-RUN go build -o build/setup.exe build/setup.go
+FROM --platform=linux/amd64 golang as setup
+ENV GOOS=windows
+ENV GOARCH=amd64
+WORKDIR /build
+ADD setup.go .
+RUN go build -o setup.exe setup.go
 
-FROM mcr.microsoft.com/windows/servercore:${servercoreTag}
-SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
-
+FROM --platform=linux/amd64 curlimages/curl as bins
 ARG cniVersion
+ARG flannelVersion
 
-RUN mkdir -force C:\k\flannel; \
-  pushd C:\k\flannel; \
-  curl.exe -LO https://github.com/coreos/flannel/releases/download/v0.12.0/flanneld.exe
+WORKDIR /utils
+RUN curl -Lo wins.exe https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
+RUN curl -Lo yq.exe https://github.com/mikefarah/yq/releases/download/2.4.1/yq_windows_amd64.exe
 
-ADD hns.psm1 /k/flannel
-COPY --from=builder /gopath/build/setup.exe /k/flannel/setup.exe
+WORKDIR /cni
+RUN curl -Lo cni.tgz https://github.com/containernetworking/plugins/releases/download/v${cniVersion}/cni-plugins-windows-amd64-v${cniVersion}.tgz
+RUN tar -xf cni.tgz
+RUN rm cni.tgz
 
-RUN mkdir C:\cni; \
-  pushd C:\cni; \
-  curl.exe -Lo cni.tgz https://github.com/containernetworking/plugins/releases/download/v${env:cniVersion}/cni-plugins-windows-amd64-v${env:cniVersion}.tgz; \
-  tar -xf cni.tgz; \
-  rm cni.tgz
+WORKDIR /flannel 
+RUN curl -Lo flanneld.exe https://github.com/coreos/flannel/releases/download/v${flannelVersion}/flanneld.exe
 
-RUN mkdir C:\utils; \
-  curl.exe -Lo C:\utils\wins.exe https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe; \
-  curl.exe -Lo C:\utils\yq.exe https://github.com/mikefarah/yq/releases/download/2.4.1/yq_windows_amd64.exe; \
-  "[Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\utils', [EnvironmentVariableTarget]::Machine)"
+FROM $BASE
+
+ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
+
+# wins.exe doesn't work in nanoserver with default ContainerUser.
+USER ContainerAdministrator
+
+COPY --from=bins /utils /utils
+COPY --from=bins /cni /cni
+ADD https://raw.githubusercontent.com/microsoft/SDN/master/Kubernetes/windows/hns.psm1 /k/flannel/hns.psm1
+COPY --from=setup /build/setup.exe /k/flannel/setup.exe
+COPY --from=bins /flannel/flanneld.exe /k/flannel/flanneld.exe
