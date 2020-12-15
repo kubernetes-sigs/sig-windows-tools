@@ -23,7 +23,7 @@ jobs:
     - name: Build and push images
       if: ${{ github.event_name == 'schedule' }}
       run: |
-        echo ${{ secrets.DOCKER_SECRET }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         ./build.ps1 -push
     - name: Build images (without push)
       if: ${{ github.event_name == 'pull_request' }}
