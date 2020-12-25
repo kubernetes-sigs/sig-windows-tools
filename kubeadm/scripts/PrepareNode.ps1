@@ -24,7 +24,8 @@ Param(
     [string] $KubernetesVersion,
     [parameter(HelpMessage="Container runtime that Kubernets will use")]
     [ValidateSet("containerD", "Docker")]
-    [string] $ContainerRuntime = "Docker"
+    [string] $ContainerRuntime = "Docker",
+    [string] $InterfaceName = "Ethernet"
 )
 $ErrorActionPreference = 'Stop'
 
@@ -91,6 +92,16 @@ mkdir -force C:\var\lib\kubelet\etc\kubernetes
 mkdir -force C:\etc\kubernetes\pki
 New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
 
+Write-Host "Auto-detecting node IP, looking for interface named '$InterfaceName...'."
+$na = Get-NetAdapter | ? Name -Like "$InterfaceName*" | ? Status -EQ Up
+while ($na -EQ $null) {
+    Write-Host "Waiting for interface named 'vEthernet ($InterfaceName...'."
+    Start-Sleep 3
+    $na = Get-NetAdapter | ? Name -Like "vEthernet ($InterfaceName*" | ? Status -EQ Up
+}
+$NodeIp = (Get-NetIPAddress -InterfaceAlias $na.ifAlias -AddressFamily IPv4).IPAddress
+Write-Host "Detected node IP: $NodeIp."
+
 $StartKubeletFileContent = '$FileContent = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
 $global:KubeletArgs = $FileContent.TrimStart(''KUBELET_KUBEADM_ARGS='').Trim(''"'')
 
@@ -104,10 +115,11 @@ if ($global:containerRuntime -eq "Docker") {
     }
 }
 
-$cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --config=/var/lib/kubelet/config.yaml --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:1.4.1`" --enable-debugging-handlers --cgroups-per-qos=false --enforce-node-allocatable=`"`" --network-plugin=cni --resolv-conf=`"`" --log-dir=/var/log/kubelet --logtostderr=false --image-pull-progress-deadline=20m"
+$cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --config=/var/lib/kubelet/config.yaml --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --node-ip={{NODE_IP}} --pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:1.4.1`" --enable-debugging-handlers --cgroups-per-qos=false --enforce-node-allocatable=`"`" --network-plugin=cni --resolv-conf=`"`" --log-dir=/var/log/kubelet --logtostderr=false --image-pull-progress-deadline=20m"
 
 Invoke-Expression $cmd'
 $StartKubeletFileContent = $StartKubeletFileContent -replace "{{CONTAINER_RUNTIME}}", "`"$ContainerRuntime`""
+$StartKubeletFileContent = $StartKubeletFileContent -replace "{{NODE_IP}}", "`"$NodeIp`""
 Set-Content -Path $global:StartKubeletScript -Value $StartKubeletFileContent
 
 Write-Host "Installing nssm"
