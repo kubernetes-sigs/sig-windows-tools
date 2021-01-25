@@ -92,6 +92,18 @@ sed -i "s/${privateIP}/${externalIP}/g" $KUBECONFIG
 k8sVersion=$(kubectl version -ojson | jq -r .serverVersion.gitVersion)
 sed "s/VERSION/${k8sVersion}/" "$REPO_ROOT/kubeadm/hack/startup/windows.ps1" > $scratchDir/windows.ps1
 
+# Patch the cgroup driver in the kubelet config to be cgroupfs.
+# Workaround for https://github.com/kubernetes/kubernetes/issues/97759
+# This makes the joining Windows workers download a kubelet configuration that is compatible
+# with the Docker defaults on Windows.
+k8sVersionMajor=$(echo $k8sVersion | cut -d "." -f 1 | cut -c2-)
+k8sVersionMinor=$(echo $k8sVersion | cut -d "." -f 2)
+kubeletConfigName="kubelet-config-$k8sVersionMajor.$k8sVersionMinor"
+kubeletTmpFile="/tmp/kubelet.yaml"
+gcloud compute ssh "root@${ctrlPlaneNodeName}" --command "KUBECONFIG=/etc/kubernetes/admin.conf kubectl get cm -n kube-system $kubeletConfigName -o yaml > $kubeletTmpFile"
+gcloud compute ssh "root@${ctrlPlaneNodeName}" --command "sed -i 's/cgroupDriver: systemd/cgroupDriver: cgroupfs/g' $kubeletTmpFile"
+gcloud compute ssh "root@${ctrlPlaneNodeName}" --command "KUBECONFIG=/etc/kubernetes/admin.conf kubectl replace -f $kubeletTmpFile"
+
 set +o xtrace
 joinCmd="$(gcloud compute ssh root@${ctrlPlaneNodeName} --command "kubeadm token create --print-join-command") --ignore-preflight-errors=IsPrivilegedUser"
 
