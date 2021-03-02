@@ -152,4 +152,6 @@ if (-not (Get-Service kubelet -ErrorAction Ignore)) {
     Write-Host "kubelet has been already installed"
 }
 
-New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250 -ErrorAction Ignore
+if (-not [bool](Get-NetFirewallRule -Name "kubelet")) {
+    New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
+}
