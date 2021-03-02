@@ -65,6 +65,9 @@ mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
+if ([bool](Get-Service -Name "rancher-wins")) { Stop-Service -Name "rancher-wins" }
+if ([bool](Get-Service -Name "kubelet")) { Stop-Service -Name "kubelet" }
+
 DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
 DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
@@ -78,8 +81,9 @@ if ($ContainerRuntime -eq "Docker") {
 } elseif ($ContainerRuntime -eq "containerD") {
     DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
     Import-Module "c:\k\hns.psm1"
-    # TODO(marosset): check if network already exists before creatation
-    New-HnsNetwork -Type NAT -Name nat
+    if (-not [bool](Get-HnsNetwork | Where-Object {$_.Name -eq "NAT"})) {
+        New-HnsNetwork -Type NAT -Name nat
+    }
 }
 
 Write-Host "Registering wins service"
@@ -89,7 +93,7 @@ start-service rancher-wins
 mkdir -force C:\var\log\kubelet
 mkdir -force C:\var\lib\kubelet\etc\kubernetes
 mkdir -force C:\etc\kubernetes\pki
-New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
+New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\ -Force
 
 $StartKubeletFileContent = '$FileContent = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
 $global:KubeletArgs = $FileContent.TrimStart(''KUBELET_KUBEADM_ARGS='').Trim(''"'')
@@ -136,4 +140,6 @@ if ($ContainerRuntime -eq "Docker") {
     nssm set kubelet DependOnService containerd
 }
 
-New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
+if (-not [bool](Get-NetFirewallRule -Name "kubelet")) {
+    New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
+}
