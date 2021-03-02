@@ -94,7 +94,6 @@ if (-not (Test-Path "$global:NssmInstallDirectory\nssm.exe")) {
     Remove-Item -Force .\nssm.zip
 
     $env:path += ";$global:NssmInstallDirectory"
-    $newPath = "$global:NssmInstallDirectory;" +
     $newPath = [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Machine) + ";$global:NssmInstallDirectory"
     [Environment]::SetEnvironmentVariable("PATH", $newPath, [EnvironmentVariableTarget]::Machine)
 } else {
