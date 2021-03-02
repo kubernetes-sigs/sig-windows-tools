@@ -95,7 +95,7 @@ if (-not (Test-Path "$global:NssmInstallDirectory\nssm.exe")) {
 
     $env:path += ";$global:NssmInstallDirectory"
     $newPath = "$global:NssmInstallDirectory;" +
-    [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Machine)
+    $newPath = [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::Machine) + ";$global:NssmInstallDirectory"
     [Environment]::SetEnvironmentVariable("PATH", $newPath, [EnvironmentVariableTarget]::Machine)
 } else {
     Write-Host "nssm has been already installed"
