@@ -113,6 +113,10 @@ if (-not (ValidateWindowsFeatures)) {
 Write-Output "Getting ContainerD binaries"
 $global:ConainterDPath = "$env:ProgramFiles\containerd"
 mkdir -Force $global:ConainterDPath | Out-Null
+
+# Download and install containerd
+# Note that the payload here includes containerd.exe, ctr.exe, and containerd-shim-runhcs-v1.exe.
+# The hcsshim (runhcs-v1) is what ultimately is the binary which calls down to the Windows container API.
 DownloadFile "$global:ConainterDPath\containerd.tar.gz" https://github.com/containerd/containerd/releases/download/v${ContainerDVersion}/containerd-${ContainerDVersion}-windows-amd64.tar.gz
 tar.exe -xvf "$global:ConainterDPath\containerd.tar.gz" --strip=1 -C $global:ConainterDPath
 $env:Path += ";$global:ConainterDPath"
@@ -131,7 +135,8 @@ Write-Output "Getting SDN CNI binaries"
 DownloadFile "c:\opt\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/v0.2.0/windows-container-networking-cni-amd64-v0.2.0.zip
 Expand-Archive -Path "c:\opt\cni\cni-plugins.zip" -DestinationPath "c:\opt\cni\bin" -Force
 
-Write-Output "Creating network config for nat network"
+# Note that the ability to leverage this no-nat network is highly dependent on your CNI implementation's ability to wait for your VNIC.
+Write-Output "Creating network config for no-nat network"
 $gateway = (Get-NetIPAddress -InterfaceAlias $netAdapterName -AddressFamily IPv4).IPAddress
 $prefixLength = (Get-NetIPAddress -InterfaceAlias $netAdapterName -AddressFamily IPv4).PrefixLength
 
