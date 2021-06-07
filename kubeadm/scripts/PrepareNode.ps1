@@ -29,6 +29,10 @@ Param(
 $ErrorActionPreference = 'Stop'
 
 function DownloadFile($destination, $source) {
+    if (Test-Path -Path $destination) {
+        Write-Error("Skipping download to avoid overwriting, already found on disk..."
+        return
+    }
     Write-Host("Downloading $source to $destination")
     curl.exe --silent --fail -Lo $destination $source
 
