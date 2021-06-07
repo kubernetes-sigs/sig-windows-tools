@@ -28,7 +28,13 @@ Param(
 )
 $ErrorActionPreference = 'Stop'
 
-function DownloadFile($destination, $source) {
+function DownloadFileIfNotExisting($destination, $source) {
+    if (Test-Path -Path $destination) { 
+        Write-Error "Cowardly refusing to overrwrite destination files at $destination."
+        Write-Error "Assuming you are running an offline installation since $source is already on disk..."
+        return false
+    }
+    
     Write-Host("Downloading $source to $destination")
     curl.exe --silent --fail -Lo $destination $source
 
@@ -65,9 +71,9 @@ mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 
-DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
-DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
-DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
+DownloadFileIfNotExisting $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
+DownloadFileIfNotExisting "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
+DownloadFileIfNotExisting "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
 
 if ($ContainerRuntime -eq "Docker") {
     # Create host network to allow kubelet to schedule hostNetwork pods
@@ -76,7 +82,7 @@ if ($ContainerRuntime -eq "Docker") {
     Write-Host "Creating Docker host network"
     docker network create -d nat host
 } elseif ($ContainerRuntime -eq "containerD") {
-    DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
+    DownloadFileIfNotExisting "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
     Import-Module "c:\k\hns.psm1"
     # TODO(marosset): check if network already exists before creatation
     New-HnsNetwork -Type NAT -Name nat
@@ -117,7 +123,7 @@ if ([Environment]::Is64BitOperatingSystem) {
 }
 
 mkdir -Force $global:NssmInstallDirectory
-DownloadFile nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
+DownloadFileIfNotExisting nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
 tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
 Remove-Item -Force .\nssm.zip
 
