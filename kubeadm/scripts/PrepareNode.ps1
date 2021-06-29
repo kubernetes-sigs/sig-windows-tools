@@ -95,6 +95,7 @@ $global:KubernetesPath = "$env:SystemDrive\k"
 $global:StartKubeletScript = "$global:KubernetesPath\StartKubelet.ps1"
 $global:NssmInstallDirectory = "$env:ProgramFiles\nssm"
 $kubeletBinPath = "$global:KubernetesPath\kubelet.exe"
+$kubeproxyBinPath = "$global:KubernetesPath\kube-proxy.exe"
 
 mkdir -force "$global:KubernetesPath"
 $env:Path += ";$global:KubernetesPath"
@@ -113,13 +114,15 @@ if ((Test-Path -Path $SelfBuiltKubeletSource -PathType Leaf) -and ($OverwriteBin
     DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 }
 
-# Copying the self-built bins to windows
-# TODO does this even overwrite the kube-proxy.exe? where does kube-proxy.exe come from if we dont copy it here?
-$KubeProxyPath = "C:\k\bin\kube-proxy.exe"
-if ($OverwriteBins) {
-    New-Item -ItemType File -Path $KubeProxyPath -Force
+if ((Test-Path -Path $SelfBuiltKubeProxySource -PathType Leaf) -and ($OverwriteBins)) {
+    New-Item -ItemType File -Path $kubeProxyBinPath -Force
     Write-Output "Copying $SelfBuiltKubeletPath"
-    Copy-Item  $SelfBuiltKubeProxySource  -Destination $KubeProxyPath -Force
+    Copy-Item  $SelfBuiltKubeProxySource  -Destination $kubeProxyBinPath -Force
+} else {
+    # Note this step may be a no-op but is done for self-consistency with the kubelet step.
+    # Usually the CNI provider or wins managed kube-proxy.
+    Write-Output "Didn't find $SelfBuiltKubeProxySource, downloading ..."
+    DownloadFile $kubeProxyBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kube-proxy.exe
 }
 
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
