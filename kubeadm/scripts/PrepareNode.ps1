@@ -36,17 +36,23 @@ PS> .\PrepareNode.ps1 -KubernetesVersion v1.19.3 -ContainerRuntime containerD
 #>
 
 Param(
-    [parameter(HelpMessage="Kubernetes version to use", Mandatory = $false)]
+    [parameter(HelpMessage="Kubernetes version to use, might be downloaded if not present")]
     [string] $KubernetesVersion = "1.21.0",
 
-    [parameter(HelpMessage="Container runtime that Kubernets will use")]
+    [parameter(HelpMessage="Container runtime that Kubernetes will use")]
     [ValidateSet("containerD", "Docker")]
     [string] $ContainerRuntime = "Docker",
 
-    # This is a modifcation for the windows-dev-tools where we
-    # OVERWRITE the WINDOWS kubelet AND kubeadm BINARY.
+    # This is a modifcation for the windows-dev-tools where we OVERWRITE the WINDOWS kubelet AND kubeadm BINARY.
     [parameter(HelpMessage="Allows to overwrite bins with self-built ones")]
-    [switch] $OverwriteBins
+    [switch] $OverwriteBins,
+
+    [parameter(HelpMessage="kubelet source build path")]
+    [string] $SelfBuiltKubeletSource = "C:\sync\windows\bin\kubelet.exe",
+
+    [parameter(HelpMessage="kube-proxy source build path")]
+    [string] $SelfBuiltKubeProxySource = "C:\sync\windows\bin\kube-proxy.exe"
+
 )
 $ErrorActionPreference = 'Stop'
 Write-Output "Overwriting bins is set to '$OverwriteBins'"
@@ -97,10 +103,10 @@ $env:Path += ";$global:KubernetesPath"
 # DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 # We replaced this ↑ with ↓
 Write-Output "Deciding source to use for Kubelet.exe ..."
-$SelfBuiltKubeletSource = "C:\sync\windows\bin\kubelet.exe"
+
 if ((Test-Path -Path $SelfBuiltKubeletSource -PathType Leaf) -and ($OverwriteBins)) {
     New-Item -ItemType File -Path $kubeletBinPath -Force
-    Write-Output "Found $SelfBuiltKubeletSource, copyin ..."
+    Write-Output "Found $SelfBuiltKubeletSource, copying ..."
     Copy-Item  $SelfBuiltKubeletSource -Destination $kubeletBinPath -Force
 } else {
     Write-Output "Didn't find $SelfBuiltKubeletSource, downloading ..."
@@ -109,7 +115,6 @@ if ((Test-Path -Path $SelfBuiltKubeletSource -PathType Leaf) -and ($OverwriteBin
 
 # Copying the self-built bins to windows
 # TODO does this even overwrite the kube-proxy.exe? where does kube-proxy.exe come from if we dont copy it here?
-$SelfBuiltKubeProxySource = "C:\sync\windows\bin\kube-proxy.exe"
 $KubeProxyPath = "C:\k\bin\kube-proxy.exe"
 if ($OverwriteBins) {
     New-Item -ItemType File -Path $KubeProxyPath -Force
