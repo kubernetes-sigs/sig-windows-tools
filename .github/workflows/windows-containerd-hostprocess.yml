@@ -1,0 +1,62 @@
+name: hostprocess
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 0 * * *' # Every day at midnight
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-18.04
+
+    steps:
+
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16.4
+    
+    - name: Create drop folder
+      run: mkdir -p $GITHUB_WORKSPACE/output/bin
+
+    - name: Build hcsshim
+      env:
+        GOOS: windows
+        GOARCH: amd64
+      run: |
+        git clone https://github.com/dcantah/hcsshim
+        cd hcsshim
+        go build -o $GITHUB_WORKSPACE/output/bin/containerd-shim-runhcs-v1.exe ./cmd/containerd-shim-runhcs-v1
+        git rev-parse HEAD > $GITHUB_WORKSPACE/output/bin/hcsshim-revision.txt
+
+    - name: Build containerd
+      env:
+        GOOS: windows
+        GOARCH: amd64
+      run: |
+        git clone https://github.com/perithompson/containerd.git
+        cd containerd
+        git checkout windows-hostnetwork
+        make binaries
+        cp ./bin/containerd.exe $GITHUB_WORKSPACE/output/bin
+        cp ./bin/ctr.exe $GITHUB_WORKSPACE/output/bin
+        git rev-parse HEAD > $GITHUB_WORKSPACE/output/bin/containerd-revision.txt
+
+    - name: make windows containerd hostprocess tarball
+      run: |
+        cd $GITHUB_WORKSPACE/output
+        tar cvf windows-containerd-hostprocess.tar.gz bin
+
+    - uses: eine/tip@master
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: hostprocess
+        rm: true
+        files: |
+          ./output/windows-containerd-hostprocess.tar.gz
