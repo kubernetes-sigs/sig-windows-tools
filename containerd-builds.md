@@ -20,7 +20,7 @@ Package includes:
 
 Package includes:
 
-- https://github.com/dcantah/hcsshim/tree/master
+- https://github.com/Microsoft/hcsshim/tree/master
   - containerd-shim-runhcs-v1.exe
 - https://github.com/perithompson/containerd/tree/windows-hostnetwork
   - containerd.exe
