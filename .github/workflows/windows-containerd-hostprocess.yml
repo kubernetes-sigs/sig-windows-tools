@@ -28,7 +28,7 @@ jobs:
         GOOS: windows
         GOARCH: amd64
       run: |
-        git clone https://github.com/dcantah/hcsshim
+        git clone https://github.com/Microsoft/hcsshim/
         cd hcsshim
         go build -o $GITHUB_WORKSPACE/output/bin/containerd-shim-runhcs-v1.exe ./cmd/containerd-shim-runhcs-v1
         git rev-parse HEAD > $GITHUB_WORKSPACE/output/bin/hcsshim-revision.txt
