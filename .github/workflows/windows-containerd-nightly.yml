@@ -1,10 +1,8 @@
-name: Nightly
+name: windows-containerd-nightly
 
 on:
   push:
     branches: [ master ]
-  # pull_request:
-  #   branches: [ master ]
   schedule:
     - cron: '0 0 * * *' # Every day at midnight
   workflow_dispatch:
@@ -55,6 +53,6 @@ jobs:
     - uses: eine/tip@master
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag: nightly
+        tag: windows-containerd-nightly
         files: |
           ./output/windows-containerd.tar.gz

@@ -4,7 +4,7 @@ This project uses GitHub actions to build nightly packages of [contianerd](https
 
 ## windows-containerd nightly builds
 
-![Nightly](https://github.com/kubernetes-sigs/sig-windows-tools/workflows/Nightly/badge.svg?branch=master)
+![windows-containerd-nightly](https://github.com/kubernetes-sigs/sig-windows-tools/workflows/windows-containerd-nightly/badge.svg?branch=master)
 
 Package includes:
 
@@ -14,9 +14,9 @@ Package includes:
   - containerd.exe
   - ctr.exe
 
-## Windows-container with hostprocess support
+## Windows-container nightly builds with hostprocess support
 
-![hostprocess](https://github.com/kubernetes-sigs/sig-windows-tools/workflows/hostprocess/badge.svg?branch=master)
+![windows-containerd-hostprocess](https://github.com/kubernetes-sigs/sig-windows-tools/workflows/windows-containerd-hostprocess/badge.svg?branch=master)
 
 Package includes:
 
