@@ -1211,7 +1211,7 @@ function ReadKubeClusterInfo()
 function GetKubeDnsServiceIp()
 {
     $svc = ConvertFrom-Json $(kubectl.exe get services -n kube-system -o json | Out-String)
-    $svc.Items | foreach { $i = $_; if ($i.Metadata.Name -match "dns") { return $i.spec.ClusterIP } }
+    $svc.Items | foreach { $i = $_; if ($i.Metadata.Name -match "kube-dns") { return $i.spec.ClusterIP } }
 }
 
 function GetAPIServerEndpoint() {
