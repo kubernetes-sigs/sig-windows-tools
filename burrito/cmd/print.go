@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Peri Thompson
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package cmd
 
 import (
-	"burrito/utils"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"path"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
+
+func init() {
+	rootCmd.AddCommand(printCmd)
+}
 
 // printCmd represents the print command
 var printCmd = &cobra.Command{
@@ -44,34 +48,25 @@ var printCmd = &cobra.Command{
 	   "wins_url": "http://localhost:3000/files/wins/wins.exe"
 	}`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var mc utils.BurritoConfig
-		if err := viper.Unmarshal(&mc); err != nil {
-			fmt.Println(err)
-		}
 		d := make(map[string]string)
 		for _, c := range mc.Components {
-			if c.Variable_Src != "" {
+			if c.VariableSrc != "" {
 				r, _ := http.NewRequest("GET", c.Source, nil)
 				httpRoot := mc.HttpRoot
 				if mc.Port != "80" && mc.Port != "" {
 					httpRoot = fmt.Sprintf("%s:%s", mc.HttpRoot, mc.Port)
 				}
 				val := fmt.Sprintf("http://%s/%s/%s/%s", httpRoot, mc.FsDir, c.Name, path.Base(r.URL.Path))
-				d[c.Variable_Src] = val
+				d[c.VariableSrc] = val
 			}
-			if c.Variable_Checksum != "" {
-				d[c.Variable_Checksum] = c.Sha256
+			if c.VariableChecksum != "" {
+				d[c.VariableChecksum] = c.Sha256
 			}
-
 		}
 		json, err := json.MarshalIndent(d, "\r", "   ")
 		if err != nil {
-			fmt.Printf("Unable to Marshall to json: %e", err)
+			log.Printf("Unable to Marshall to json: %e", err)
 		}
-		fmt.Println(string(json))
+		cmd.Print(string(json))
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(printCmd)
 }
