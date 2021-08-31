@@ -2,9 +2,9 @@ version: '3.9'
 
 services:
   burrito:
-    build: .
-    volumes:
-    - ./examples/burrito.yaml:/root/.burrito.yaml
-    - ./files:/root/files
+    build:
+      context: .
+      args:
+        CONFIG_FILE: ./examples/burrito.yaml
     ports:
       - "3000:3000"

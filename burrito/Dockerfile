@@ -12,4 +12,10 @@ WORKDIR /root/
 COPY --from=builder /burrito/burrito burrito
 RUN chmod +x burrito
 
-CMD ["./burrito", "serve", "-b"]
+ARG CONFIG_FILE=examples/burrito.yaml
+COPY --from=builder /burrito/${CONFIG_FILE} .
+RUN mv $(basename "${CONFIG_FILE}") .burrito.${CONFIG_FILE##*.} \
+  && ls -la \
+  && ./burrito build
+
+CMD ["./burrito", "serve"]
