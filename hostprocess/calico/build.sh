@@ -17,7 +17,7 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
 esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
-repository=${repository:-"jsturtevant"}
+repository=${repository:-"sigwindowstools"}
 calicoVersion=${calicoVersion:-"v3.20.0"}
 
 docker buildx create --name img-builder --use --platform windows/amd64

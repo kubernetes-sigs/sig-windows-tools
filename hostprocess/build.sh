@@ -1,6 +1,6 @@
 #!/bin/bash
 
-repository=${repository:-"jsturtevant"}
+repository=${repository:-"sigwindowstools"}
 flannelVersion=${flannelVersion:-"v0.14.0"}
 proxyVersion=${proxyVersion:-"v1.22.1"}
 calicoVersion=${calicoVersion:-"v3.20.0"}

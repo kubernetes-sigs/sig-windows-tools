@@ -99,7 +99,7 @@ spec:
         operator: Exists
       containers:
       - name: kube-flannel
-        image: jsturtevant/flannel-tools:v0.14.0-hostprocess
+        image: sigwindowstools/flannel-tools:v0.14.0-hostprocess
         imagePullPolicy: Always
         volumeMounts:
         - name: flannel-cfg

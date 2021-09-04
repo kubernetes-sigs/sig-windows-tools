@@ -20,3 +20,7 @@ Idealy these should use init containers (possible written in golang) to install 
 main container can run the required components for a given CNI.
 
 kube-proxy has slightly different configurations (sourcevip as example) across cni's so they are split into separate folder for each. Kubeadm should create and configure kube-proxy for windows appropriately during node initialization.
+
+## Building images
+
+To build all the images update version and images refences in `build.sh` then run it.
