@@ -19,4 +19,4 @@ These scripts are based off the initial Docker implementation in https://github.
 Idealy these should use init containers (possible written in golang) to install and configure the binaries as is done with Linux.  Then the
 main container can run the required components for a given CNI.
 
-Kubeadm should create and configure kubeproxy for windows appropriately during node initialization.
+kube-proxy has slightly different configurations (sourcevip as example) across cni's so they are split into separate folder for each. Kubeadm should create and configure kube-proxy for windows appropriately during node initialization.
