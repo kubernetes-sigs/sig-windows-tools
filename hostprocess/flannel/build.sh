@@ -2,11 +2,14 @@
 
 # https://devhints.io/bash
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
-  -f | --flannel )
-    shift; flannel="1"
+  -f | --flannelVersion )
+    shift; flannelVersion="$1"
     ;;
-  -p | --proxy )
-    shift; proxy="1"
+  -p | --proxyVersion )
+    shift; proxyVersion="$1"
+    ;;
+  -r | --repository )
+    shift; repository="$1"
     ;;
   -a | --all )
     shift; all="1"
@@ -14,17 +17,22 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
 esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
+repository=${repository:-"jsturtevant"}
+
 docker buildx create --name img-builder --use --platform windows/amd64
 trap 'docker buildx rm img-builder' EXIT
 
-if [[ "$flannel" == "1" || "$all" == "1" ]] ; then
-    pushd flanneld
-    docker buildx build --platform windows/amd64 --output=type=registry --pull -f Dockerfile -t jsturtevant/flannel:hostprocess .
-    popd
-fi
+if [[ -n "$flannelVersion" || "$all" == "1" ]] ; then
+  # set default
+  flannelVersion=${flannelVersion:-"v0.13.0"}
+  pushd flanneld
+  docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=flannelVersion=$flannelVersion -f Dockerfile -t $repository/flannel:$flannelVersion-hostprocess .
+  popd
+fi 
 
-if [[ "$proxy" == "1" || "$all" == "1" ]] ; then
-    pushd kube-proxy
-    docker buildx build --platform windows/amd64 --output=type=registry --pull -f Dockerfile -t jsturtevant/flannel:hostprocess .
-    popd
+if [[ -n "$proxyVersion" || "$all" == "1" ]] ; then
+  proxyVersion=${proxyVersion:-"v1.22.1"}
+  pushd kube-proxy
+  docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-flannel-hostprocess .
+  popd
 fi

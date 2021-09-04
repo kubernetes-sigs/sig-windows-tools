@@ -4,10 +4,10 @@
 ARG BASE="mcr.microsoft.com/windows/nanoserver:1809"
 
 FROM --platform=linux/amd64 curlimages/curl as bins
-ARG CALICO_VERSION="3.20.0"
+ARG CALICO_VERSION="v3.20.0"
 
 WORKDIR /cni
-RUN curl -Lo cni.zip https://github.com/projectcalico/calico/releases/download/v${CALICO_VERSION}/calico-windows-v${CALICO_VERSION}.zip
+RUN curl -Lo cni.zip https://github.com/projectcalico/calico/releases/download/${CALICO_VERSION}/calico-windows-${CALICO_VERSION}.zip
 RUN unzip cni.zip
 
 FROM $BASE

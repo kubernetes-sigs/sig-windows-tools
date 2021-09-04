@@ -6,7 +6,7 @@ ARG BASE="mcr.microsoft.com/windows/nanoserver:1809"
 FROM --platform=linux/amd64 curlimages/curl as bins
 ARG containernetworkingCniVersion="0.8.7"
 ARG cniVersion="0.2.0"
-ARG flannelVersion="0.13.0"
+ARG flannelVersion="v0.13.0"
 
 # Todo simplify this
 # We need both sets of binaries 
@@ -22,7 +22,7 @@ RUN curl -Lo cni.zip https://github.com/microsoft/windows-container-networking/r
 RUN unzip /cni/cni.zip
 
 WORKDIR /flannel 
-RUN curl -Lo flanneld.exe https://github.com/coreos/flannel/releases/download/v${flannelVersion}/flanneld.exe
+RUN curl -Lo flanneld.exe https://github.com/coreos/flannel/releases/download/${flannelVersion}/flanneld.exe
 
 FROM $BASE
 

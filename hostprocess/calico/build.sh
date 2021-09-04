@@ -2,14 +2,14 @@
 
 # https://devhints.io/bash
 while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
-  -i | --installer )
-    shift; installer="1"
+  -n | --calicoVersion )
+    shift; calicoVersion="$1"
     ;;
-  -n | --node )
-    shift; node="1"
+  -p | --proxyVersion )
+    shift; proxyVersion="$1"
     ;;
-  -p | --proxy )
-    shift; proxy="1"
+  -r | --repository )
+    shift; repository="$1"
     ;;
   -a | --all )
     shift; all="1"
@@ -17,24 +17,28 @@ while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
 esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
+repository=${repository:-"jsturtevant"}
+calicoVersion=${calicoVersion:-"v3.20.0"}
+
 docker buildx create --name img-builder --use --platform windows/amd64
 trap 'docker buildx rm img-builder' EXIT
 
-if [[ "$installer" == "1" || "$all" == "1" ]] ; then
+if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
     trap 'docker buildx rm img-builder' EXIT
     pushd install
-    docker buildx build --platform windows/amd64 --output=type=registry --pull -f Dockerfile.install -t jsturtevant/calico-install:hostprocess .
+    docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.install -t $repository/calico-install:$calicoVersion-hostprocess .
     popd
 fi
 
-if [[ "$node" == "1" || "$all" == "1" ]] ; then
+if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
     pushd node
-    docker buildx build --platform windows/amd64 --output=type=registry --pull -f Dockerfile.node -t jsturtevant/calico-node:hostprocess .
+    docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.node -t $repository/calico-node:$calicoVersion-hostprocess .
     popd
 fi
 
-if [[ "$proxy" == "1" || "$all" == "1" ]] ; then
+if [[ -n "$proxyVersion" || "$all" == "1" ]] ; then
+    proxyVersion=${proxyVersion:-"v1.22.1"}
     pushd kube-proxy
-    docker buildx build --platform windows/amd64 --output=type=registry --pull -f Dockerfile -t jsturtevant/kube-proxy:calico-hostprocess .
+    docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-calico-hostprocess .
     popd
 fi
