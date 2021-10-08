@@ -31,7 +31,7 @@ data:
     if ($containerRuntime -eq "docker") {
       $cniJson = get-content /etc/kube-flannel-windows/cni-conf.json | ConvertFrom-Json
 
-      $cniJson.delegate.policies[0].Value.ExceptionList = $serviceSubnet, $podSubnet, $networkJson.SubnetCIDR
+      $cniJson.delegate.policies[0].Value.ExceptionList = $serviceSubnet, $podSubnet, $networkJson.AddressCIDR
       $cniJson.delegate.policies[1].Value.DestinationPrefix = $serviceSubnet
       $cniJson.delegate.policies[2].Value.DestinationPrefix = $networkJson.AddressCIDR
 
@@ -39,7 +39,7 @@ data:
     } elseif ($containerRuntime -eq "containerd") {
       $cniJson = get-content /etc/kube-flannel-windows/cni-conf-containerd.json | ConvertFrom-Json
 
-      $cniJson.delegate.AdditionalArgs[0].Value.Settings.Exceptions = $serviceSubnet, $podSubnet, $networkJson.SubnetCIDR
+      $cniJson.delegate.AdditionalArgs[0].Value.Settings.Exceptions = $serviceSubnet, $podSubnet, $networkJson.AddressCIDR
       $cniJson.delegate.AdditionalArgs[1].Value.Settings.DestinationPrefix = $serviceSubnet
       $cniJson.delegate.AdditionalArgs[2].Value.Settings.DestinationPrefix = $networkJson.AddressCIDR
 
