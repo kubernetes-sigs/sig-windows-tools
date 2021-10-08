@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   schedule:
-    - cron: '0 0 * * *' # Every day at midnight
+    - cron: '45 0 * * *' # Every day at 00:45 UTC 
   workflow_dispatch:
 
 jobs:
