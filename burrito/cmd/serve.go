@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"io/ioutil"
 
 	"github.com/spf13/cobra"
 )
@@ -69,15 +70,44 @@ var serveCmd = &cobra.Command{
 
 		s := fmt.Sprintf("%s:%s", mc.HttpRoot, mc.Port)
 
-		printContents(mc.FsDir, s)
+		content := getVersionsContent()
+		if len(content) > 0 {
+			fmt.Println(content)
+		} else {
+			printContents(mc.FsDir, s)
+		}
 		root := fmt.Sprintf("/%s/", mc.FsDir)
 		http.Handle(root, http.StripPrefix(strings.TrimRight(root, "/"), http.FileServer(http.Dir(mc.FsDir))))
+		// Redirect index.html to versions file, by deafult, versions file will be shown when
+		// following links are accessed:
+		//    - http://<ip>:<port>
+		//    - http://<ip>:<port>/index.html
+		http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+			if req.URL.Path != "/" && req.URL.Path != "/index.html" {
+				http.NotFound(w, req)
+				return
+			}
+			content := getVersionsContent()
+			fmt.Fprintf(w, content)
+		})
 
 		log.Printf("Listening on :%s...\n", s)
 		if err := http.ListenAndServe(s, nil); err != nil {
 			log.Fatal(err)
 		}
 	},
+}
+
+func getVersionsContent() string {
+	versionsFile := verFile
+	if versionsFile == "" {
+		versionsFile = ".versions"
+	}
+	content, err := ioutil.ReadFile(versionsFile)
+	if err == nil {
+		return string(content)
+	}
+	return ""
 }
 
 func printContents(root, url string) {

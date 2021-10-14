@@ -27,6 +27,7 @@ import (
 
 var (
 	cfgFile string
+	verFile string
 	mc      utils.BurritoConfig
 )
 
@@ -48,6 +49,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.burrito.yaml)")
+	rootCmd.PersistentFlags().StringVar(&verFile, "versions", "", "versions file (default is $HOME/.versions)")
 }
 
 // initConfig reads in config file and ENV variables if set.
