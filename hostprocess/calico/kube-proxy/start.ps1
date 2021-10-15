@@ -87,10 +87,6 @@ if ($network.Type -EQ "Overlay") {
     $sourceVip = (Get-HnsEndpoint | ? Name -EQ "Calico_ep").IpAddress
     $argList += "--source-vip=$sourceVip"
     $extraFeatures += "WinOverlay=true"
-
-    # VXLAN on Windows doesn't support dualstack so disable explicitly. From k8s
-    # 1.21 onwards IPv6DualStack defaults to true
-    $extraFeatures += "IPv6DualStack=false"
 }
 
 if ($extraFeatures.Length -GT 0) {
@@ -106,7 +102,7 @@ if ($policyLists) {
     $policyLists | Remove-HnsPolicyList
 }
 
-Write-Host "Start to run $env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/kube-proxy.exe"
+Write-Host "Start to run $kproxy $argList"
 # We'll also pick up a network name env var from the Calico config file.  Override it
 # since the value in the config file may be a regex.
 $env:KUBE_NETWORK=$NetworkName
