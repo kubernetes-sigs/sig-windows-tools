@@ -14,7 +14,12 @@
 
 # Modified from https://github.com/projectcalico/node
 $NetworkName = "Calico"
-$kproxy = "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/kube-proxy.exe"
+if (test-path env:KUBEPROXY_PATH){ 
+    # used for CI flows
+    $kproxy = $env:KUBEPROXY_PATH
+}else {
+    $kproxy = "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/kube-proxy.exe"
+}
 ipmo -Force .\hns.psm1
 
 Write-Host "Running kub-proxy service."
