@@ -37,7 +37,7 @@ if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
 fi
 
 if [[ -n "$proxyVersion" || "$all" == "1" ]] ; then
-    proxyVersion=${proxyVersion:-"v1.22.1"}
+    proxyVersion=${proxyVersion:-"v1.22.2"}
     pushd kube-proxy
     docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-calico-hostprocess .
     popd
