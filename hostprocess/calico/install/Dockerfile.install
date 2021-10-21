@@ -1,0 +1,22 @@
+# Note this image doesn't really mater for hostprocess
+# the files in the image are copied to $env:CONTAINER_SANDBOX_MOUNT_POINT on the host
+# but the file system is the Host NOT the container
+ARG BASE="mcr.microsoft.com/windows/nanoserver:1809"
+
+FROM --platform=linux/amd64 curlimages/curl as bins
+ARG CALICO_VERSION="v3.20.0"
+
+WORKDIR /cni
+RUN curl -Lo cni.zip https://github.com/projectcalico/calico/releases/download/${CALICO_VERSION}/calico-windows-${CALICO_VERSION}.zip
+RUN unzip cni.zip
+
+FROM $BASE
+
+ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
+
+COPY --from=bins /cni/CalicoWindows/cni/calico.exe /calico/cni/calico.exe
+COPY --from=bins /cni/CalicoWindows/cni/calico-ipam.exe /calico/cni/calico-ipam.exe
+COPY --from=bins /cni/CalicoWindows/calico-kube-config.template /calico/calico-kube-config.template
+
+COPY calico-install.ps1 /calico/install.ps1
+ENTRYPOINT ["powershell"]
