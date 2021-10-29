@@ -4,7 +4,7 @@
 ARG BASE="mcr.microsoft.com/windows/nanoserver:1809"
 
 FROM --platform=linux/amd64 curlimages/curl as bins
-ARG k8sVersion="v1.22.2"
+ARG k8sVersion="v1.22.3"
 
 WORKDIR /kube-proxy
 RUN curl -LO https://dl.k8s.io/$k8sVersion/bin/windows/amd64/kube-proxy.exe

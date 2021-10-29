@@ -2,7 +2,7 @@
 
 repository=${repository:-"sigwindowstools"}
 flannelVersion=${flannelVersion:-"v0.14.0"}
-proxyVersion=${proxyVersion:-"v1.22.2"}
+proxyVersion=${proxyVersion:-"v1.22.3"}
 calicoVersion=${calicoVersion:-"v3.20.0"}
 
 SCRIPTROOT=$(dirname "${BASH_SOURCE[0]}")
@@ -13,7 +13,7 @@ pushd $SCRIPTROOT/calico
 ./build.sh -r $repository --calicoVersion $calicoVersion
 popd
 
-declare -a proxyVersions=("v1.22.2")
+declare -a proxyVersions=("v1.22.3")
  
 # Read the array values with space
 for proxyVersion in "${proxyVersions[@]}"; do
