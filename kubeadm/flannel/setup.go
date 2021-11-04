@@ -33,7 +33,13 @@ func setupL2bridge(interfaceName string) {
 }
 
 func run(command string) {
-	cmd := exec.Command("powershell", "-Command", command)
+	shell := "pwsh"
+	_, err := exec.LookPath(shell)
+	if err != nil {
+		shell = "powershell"
+	}
+
+	cmd := exec.Command(shell, "-Command", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
