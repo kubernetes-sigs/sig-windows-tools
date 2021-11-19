@@ -50,6 +50,16 @@ jobs:
         cd $GITHUB_WORKSPACE/output
         tar cvf windows-containerd.tar.gz bin
 
+    # sometimes eine/tip@master fails to upload release artifacts and this leaves
+    # a stale tmp file on the release which causes future runs of this workflow to fail.
+    - name: delete tmp.* release artifacts
+      uses: mknejp/delete-release-assets@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: windows-containerd-nightly
+        fail-if-no-assests: false # do not fail if temp.windows-contaienrd.tar.gz does not exist
+        assets: tmp.windows-containerd.tar.gz
+
     - uses: eine/tip@master
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
