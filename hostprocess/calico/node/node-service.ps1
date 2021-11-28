@@ -41,15 +41,15 @@ if ($env:CALICO_NETWORKING_BACKEND -EQ "windows-bgp" -OR $env:CALICO_NETWORKING_
     $prevLastBootTime = Get-StoredLastBootTime
     if ($prevLastBootTime -NE $lastBootTime)
     {
-        if ((Get-HNSNetwork | ? Type -NE nat))
+        if ((Get-HNSNetwork | ? Type -NE nat | ? Name -NE WSL))
         {
             Write-Host "First time Calico has run since boot up, cleaning out any old network state."
-            Get-HNSNetwork | ? Type -NE nat | Remove-HNSNetwork
+            Get-HNSNetwork | ? Type -NE nat | ? Name -NE WSL | Remove-HNSNetwork
             do
             {
                 Write-Host "Waiting for network deletion to complete."
                 Start-Sleep 1
-            } while ((Get-HNSNetwork | ? Type -NE nat))
+            } while ((Get-HNSNetwork | ? Type -NE nat | ? Name -NE WSL))
         }
 
         # After deletion of all hns networks, wait for an interface to have an IP that is not a 169.254.0.0/16 (or 127.0.0.0/8) address,
