@@ -1,5 +1,5 @@
 ARG BUILDER_IMAGE=golang:1.16-alpine
-ARG RUN_IMAGE=alpine:latest
+ARG RUN_IMAGE=ubuntu:latest
 
 FROM ${BUILDER_IMAGE} as builder
 
