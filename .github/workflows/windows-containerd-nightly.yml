@@ -57,7 +57,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: windows-containerd-nightly
-        fail-if-no-assests: false # do not fail if temp.windows-contaienrd.tar.gz does not exist
+        fail-if-no-assets: false # do not fail if temp.windows-contaienrd.tar.gz does not exist
         assets: tmp.windows-containerd.tar.gz
 
     - uses: eine/tip@master
