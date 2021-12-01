@@ -14,7 +14,7 @@ FROM ${RUN_IMAGE} as run
 
 WORKDIR /root/
 COPY --from=builder /burrito/burrito burrito
-RUN chmod 777 /root/burrito
+RUN chmod 755 /root/burrito
 
 # Relative path in /burrito
 ARG CONFIG_FILE=examples/burrito.yaml
