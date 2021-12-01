@@ -1,5 +1,5 @@
 ARG BUILDER_IMAGE=golang:1.16
-ARG RUN_IMAGE=ubuntu:latest
+ARG RUN_IMAGE=gcr.io/distroless/base-debian11
 
 FROM ${BUILDER_IMAGE} as builder
 
