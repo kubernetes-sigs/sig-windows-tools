@@ -5,7 +5,7 @@ FROM ${BUILDER_IMAGE} as builder
 
 COPY . /burrito
 WORKDIR /burrito
-RUN CGO_ENABLED=0 go build
+RUN go build
 
 # Just create an empty one if it is not specified
 RUN touch .versions
@@ -21,8 +21,7 @@ ARG CONFIG_FILE=examples/burrito.yaml
 COPY --from=builder /burrito/${CONFIG_FILE} .
 RUN mv $(basename "${CONFIG_FILE}") .burrito.${CONFIG_FILE##*.} && ls -la /root
 
-RUN cp /root/burrito /bin/
-RUN /bin/burrito build
+RUN INSECURE=true /root/burrito build
 
 # Relative path in /burrito
 ARG VERSIONS_FILE=.versions

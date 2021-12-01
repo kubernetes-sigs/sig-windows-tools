@@ -17,7 +17,7 @@ limitations under the License.
 package cmd
 
 import (
-	 "crypto/tls"
+	"crypto/tls"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -79,7 +79,9 @@ func DownloadFile(folder, url, checksum string) error {
 
 
 	// local file doesn't exist, download it
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	if os.Getenv("INSECURE")=="true" {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Printf("%v", err)
