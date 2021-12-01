@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"crypto/sha256"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -41,6 +42,7 @@ var buildCmd = &cobra.Command{
 	Read the specified config file and download the resources into the files 
 	sub directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 		for _, c := range mc.Components {
 			path, err := os.Getwd()
 			if err != nil {
