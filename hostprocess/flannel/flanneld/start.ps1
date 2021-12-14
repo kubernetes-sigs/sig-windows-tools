@@ -1,8 +1,8 @@
 $ErrorActionPreference = "Stop";
 
 # flannel uses host-local, flannel.exe, and sdnoverlay so copy that to the correct location
-Write-Output "Moving SDN CNI binaries to host"
-Copy-Item -Path "$env:CONTAINER_SANDBOX_MOUNT_POINT/cni/" -Destination "c:\opt\cni\bin" -Force
+Write-Output "Copying SDN CNI binaries to host"
+Copy-Item -Path "$env:CONTAINER_SANDBOX_MOUNT_POINT/cni/*" -Destination "c:\opt\cni\bin" -Force
 
 Write-Host "copy flannel config"
 mkdir -force C:\etc\kube-flannel\
@@ -39,4 +39,4 @@ write-host $env:POD_NAME
 write-host $env:POD_NAMESPACE
 
 Write-Host "Starting flannel"
-& $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel/flanneld.exe --kube-subnet-mgr --kubeconfig-file $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel-config-file/kubeconfig.conf --iface 10.1.0.5
+& $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel/flanneld.exe --kube-subnet-mgr --kubeconfig-file $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel-config-file/kubeconfig.conf --iface $managementIP
