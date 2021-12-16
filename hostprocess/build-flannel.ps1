@@ -15,7 +15,7 @@ foreach($flannelVersion in $flannelVersions)
         $testVersion = [version]$Matches[1]
         if ($testVersion -ge $minFlannelVersion)
         {
-            Write-Host "Build images for flannel $calicoVersion"
+            Write-Host "Build images for flannel $flannelVersion"
             docker buildx build --platform windows/amd64 --output=type=registry --pull --build-arg=flannelVersion=$flannelVersion -f Dockerfile -t $repository/flannel:$flannelVersion-hostprocess .
         }
     }
