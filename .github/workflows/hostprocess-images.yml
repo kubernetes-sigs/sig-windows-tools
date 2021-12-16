@@ -1,0 +1,25 @@
+name: hostprocess-images
+
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ./hostprocess
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare docker build
+      run: |
+        echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        docker buildx create --name img-builder --use --platform windows/amd64
+    - name: Build and push images for calico
+      run: |
+        ./build-calico.ps1
+    - name: Build and push images for flannel
+      run: |
+        ./build-flannel.ps1
