@@ -7,8 +7,8 @@ param(
 pushd flannel
 write-host "build flannel"
 pushd flanneld
-$calicoVersions = (curl -L https://api.github.com/repos/flannel-io/flannel/releases | ConvertFrom-Json) | % tag_name
-foreach($flannelVersion in $calicoVersions)
+$flannelVersions = (curl -L https://api.github.com/repos/flannel-io/flannel/releases | ConvertFrom-Json) | % tag_name
+foreach($flannelVersion in $flannelVersions)
 {
     if ($flannelVersion -match "^v(\d+\.\d+\.\d+)$")
     {
