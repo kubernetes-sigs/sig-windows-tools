@@ -13,8 +13,8 @@ pushd $SCRIPTROOT/calico
 ./build.sh -r $repository --calicoVersion $calicoVersion
 popd
 
-declare -a proxyVersions=("v1.22.4")
- 
+declare -a proxyVersions=("v1.22.5" "v1.23.1")
+
 # Read the array values with space
 for proxyVersion in "${proxyVersions[@]}"; do
   pushd $SCRIPTROOT/flannel
