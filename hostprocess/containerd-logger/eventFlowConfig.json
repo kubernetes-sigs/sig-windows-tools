@@ -1,0 +1,28 @@
+{
+    "inputs": [
+    {
+        "type": "ETW",
+        "sessionNamePrefix": "containerd",
+        "cleanupOldSessions": true,
+        "reuseExistingSession": true,
+        "providers": [
+            {
+                "providerName": "Microsoft.Virtualization.RunHCS",
+                "providerGuid": "0B52781F-B24D-5685-DDF6-69830ED40EC3",
+                "level": "Verbose"
+            },
+            {
+                "providerName": "ContainerD",
+                "providerGuid": "2acb92c0-eb9b-571a-69cf-8f3410f383ad",
+                "level": "Verbose"
+            }
+        ]
+    }
+  ],
+  "outputs": [
+    {
+        "type": "StdOutput"
+    }
+  ],
+  "schemaVersion": "2016-08-11"
+}
