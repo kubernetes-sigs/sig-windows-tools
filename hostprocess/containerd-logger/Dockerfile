@@ -7,7 +7,7 @@ COPY *.csproj ./
 RUN dotnet restore
 
 # Copy everything else and build
-COPY program.cs ./
+COPY Program.cs ./
 COPY eventFlowConfig.json ./
 RUN dotnet publish -c Release -r win-x64 -o out
 
