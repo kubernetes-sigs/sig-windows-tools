@@ -59,7 +59,7 @@ cp $env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf /var/li
 # Build up the arguments for starting kube-proxy.
 $argList = @(`
     "--hostname-override=$env:NODENAME", `
-    "--v=2",`
+    "--v=4",`
     "--proxy-mode=kernelspace",`
     "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf"`
 )
