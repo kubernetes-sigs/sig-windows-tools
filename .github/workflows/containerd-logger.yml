@@ -6,7 +6,7 @@ on:
     paths:
       - hostprocess/containerd-logger/VERSION
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
     paths:
       - hostprocess/containerd-logger/**"
     branches:
@@ -34,6 +34,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context:  hostprocess\containerd-logger
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request_target' }}
           tags: |
             ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:${{ env.RELEASE_VERSION }}
