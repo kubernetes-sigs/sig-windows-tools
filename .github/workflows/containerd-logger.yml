@@ -1,0 +1,39 @@
+name: windows-container-logger
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - hostprocess/containerd-logger/VERSION
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - hostprocess/containerd-logger/**"
+    branches:
+      - master
+
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set env
+        run: |
+          $version=Get-Content "hostprocess\containerd-logger\VERSION"
+          echo "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+      - name: login to GitHub container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and push
+        uses: docker/build-push-action@v2
+        with:
+          context:  hostprocess\containerd-logger
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:${{ env.RELEASE_VERSION }}
