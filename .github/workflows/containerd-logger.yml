@@ -7,6 +7,8 @@ on:
       - hostprocess/containerd-logger/VERSION
   workflow_dispatch:
   pull_request:
+    paths:
+      - hostprocess/containerd-logger/**
     branches:
       - master
 
@@ -15,7 +17,7 @@ permissions:
   packages: write
 jobs:
   image:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
       - name: set env
@@ -28,6 +30,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
       - name: build and push
         uses: docker/build-push-action@v2
         with:
