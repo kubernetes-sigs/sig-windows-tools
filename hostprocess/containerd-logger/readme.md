@@ -10,7 +10,7 @@ Build the container:
 
 ```
 cd containerd-logger
-docker build -t jsturtevant/containerd-logger .
+docker build -t ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:latest .
 ```
 
 Deploy:

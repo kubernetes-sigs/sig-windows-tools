@@ -20,7 +20,7 @@ spec:
           runAsUserName: "NT AUTHORITY\\system"
       hostNetwork: true
       containers:
-      - image: jsturtevant/containerd-logger:latest
+      - image: ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:v0.1.0
         args: [ "config.json" ]
         name: containerd-logger
         imagePullPolicy: Always
