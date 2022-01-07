@@ -30,13 +30,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-      - name: build and push
-        uses: docker/build-push-action@v2
-        with:
-          context:  hostprocess\containerd-logger
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:${{ env.RELEASE_VERSION }}
+      - name: set env
+        run: |
+          docker build -t ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:${{ env.RELEASE_VERSION }} hostprocess\containerd-logger
+      - name: set env
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          docker push ghcr.io/kubernetes-sigs/sig-windows-tools/containerd-logger:${{ env.RELEASE_VERSION }}
