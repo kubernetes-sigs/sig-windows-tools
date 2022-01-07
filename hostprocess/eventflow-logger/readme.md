@@ -9,7 +9,7 @@ This makes use of the [EventFlow library](https://github.com/Azure/diagnostics-e
 Build the container:
 
 ```
-cd containerd-logger
+cd eventflow-logger
 docker build -t ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger:latest .
 ```
 
@@ -29,5 +29,5 @@ dotnet run -- eventFlowConfig.json
 Configured to produce a [single binary(https://docs.microsoft.com/en-us/dotnet/core/deploying/single-file#publish-a-single-file-app---cli)].  To build run:
 
 ```
-dotnet publish -r win-x64
+dotnet publish -c Release -r win-x64
 ```
