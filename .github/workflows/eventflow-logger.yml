@@ -37,7 +37,7 @@ jobs:
           docker build -t ${{ env.RELEASE_IMAGE }}-1809 --build-arg=OS=1809 hostprocess\eventflow-logger
           docker build -t ${{ env.RELEASE_IMAGE }}-ltsc2022 --build-arg=OS=ltsc2022 hostprocess\eventflow-logger
       - name: docker push
-        if: ${{ github.event_name != 'pull_request' }}
+        #if: ${{ github.event_name != 'pull_request' }}
         run: |
           docker push ${{ env.RELEASE_IMAGE }}-1809
           docker push ${{ env.RELEASE_IMAGE }}-ltsc2022
