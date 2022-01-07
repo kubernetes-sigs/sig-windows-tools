@@ -37,15 +37,17 @@ jobs:
           docker build -t ${{ env.RELEASE_IMAGE }}-1809 --build-arg=OS=1809 hostprocess\eventflow-logger
           docker build -t ${{ env.RELEASE_IMAGE }}-ltsc2022 --build-arg=OS=ltsc2022 hostprocess\eventflow-logger
       - name: docker push
-        if: ${{ github.event_name != 'pull_request' }}
+        #if: ${{ github.event_name != 'pull_request' }}
         run: |
           docker push ${{ env.RELEASE_IMAGE }}-1809
           docker push ${{ env.RELEASE_IMAGE }}-ltsc2022
 
           docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
-          docker manifest annotate --os windows --arch amd64 --os-version 1809 ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
+          $osversion=(docker manifest inspect mcr.microsoft.com/windows/nanoserver:1809 -v | ConvertFrom-Json).Descriptor.platform."os.version"
+          docker manifest annotate --os windows --arch amd64 --os-version $osversion ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
           
           docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
-          docker manifest annotate --os windows --arch amd64 --os-version ltsc2022 ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
+          $osversion=(docker manifest inspect mcr.microsoft.com/windows/nanoserver:ltsc2022 -v | ConvertFrom-Json).Descriptor.platform."os.version"
+          docker manifest annotate --os windows --arch amd64 --os-version $osversion ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
           
           docker manifest push --purge ${{ env.RELEASE_IMAGE }}
