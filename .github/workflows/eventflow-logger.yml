@@ -18,12 +18,14 @@ permissions:
 jobs:
   image:
     runs-on: windows-2022
+    env:
+      image: ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger
     steps:
       - uses: actions/checkout@v2
-      - name: set env
+      - name: set release image
         run: |
           $version=Get-Content "hostprocess\eventflow-logger\VERSION"
-          echo "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+          echo "RELEASE_IMAGE=${{ env.image }}:$version" >> $env:GITHUB_ENV
       - name: login to GitHub container registry
         uses: docker/login-action@v1
         with:
@@ -32,8 +34,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: docker build
         run: |
-          docker build -t ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger:${{ env.RELEASE_VERSION }} hostprocess\eventflow-logger
+          docker build -t ${{ env.RELEASE_IMAGE }}-1809 --build-arg=OS=1809 hostprocess\eventflow-logger
+          docker build -t ${{ env.RELEASE_IMAGE }}-ltsc2022 --build-arg=OS=ltsc2022 hostprocess\eventflow-logger
       - name: docker push
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          docker push ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger:${{ env.RELEASE_VERSION }}
+          docker push ${{ env.RELEASE_IMAGE }}-1809
+          docker push ${{ env.RELEASE_IMAGE }}-ltsc2022
+
+          docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
+          docker manifest annotate --os windows --arch amd64 --os-version 1809 ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
+          
+          docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
+          docker manifest annotate --os windows --arch amd64 --os-version ltsc2022 ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
+          
+          docker manifest push --purge ${{ env.RELEASE_IMAGE }}
