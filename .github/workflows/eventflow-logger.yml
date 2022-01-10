@@ -1,0 +1,53 @@
+name: windows-eventflow-logger
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - hostprocess/eventflow-logger/VERSION
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - hostprocess/eventflow-logger/**
+    branches:
+      - master
+
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: windows-2022
+    env:
+      image: ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger
+    steps:
+      - uses: actions/checkout@v2
+      - name: set release image
+        run: |
+          $version=Get-Content "hostprocess\eventflow-logger\VERSION"
+          echo "RELEASE_IMAGE=${{ env.image }}:$version" >> $env:GITHUB_ENV
+      - name: login to GitHub container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: docker build
+        run: |
+          docker build -t ${{ env.RELEASE_IMAGE }}-1809 --build-arg=OS=1809 hostprocess\eventflow-logger
+          docker build -t ${{ env.RELEASE_IMAGE }}-ltsc2022 --build-arg=OS=ltsc2022 hostprocess\eventflow-logger
+      - name: docker push
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          docker push ${{ env.RELEASE_IMAGE }}-1809
+          docker push ${{ env.RELEASE_IMAGE }}-ltsc2022
+
+          docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
+          $osversion=(docker manifest inspect mcr.microsoft.com/windows/nanoserver:1809 -v | ConvertFrom-Json).Descriptor.platform."os.version"
+          docker manifest annotate --os windows --arch amd64 --os-version $osversion ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-1809
+          
+          docker manifest create --amend ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
+          $osversion=(docker manifest inspect mcr.microsoft.com/windows/nanoserver:ltsc2022 -v | ConvertFrom-Json).Descriptor.platform."os.version"
+          docker manifest annotate --os windows --arch amd64 --os-version $osversion ${{ env.RELEASE_IMAGE }} ${{ env.RELEASE_IMAGE }}-ltsc2022
+          
+          docker manifest push --purge ${{ env.RELEASE_IMAGE }}
