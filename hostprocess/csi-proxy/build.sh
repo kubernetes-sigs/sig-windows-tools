@@ -1,5 +1,6 @@
 #!/bin/bash
 set -x
+set -e
 
 if [[ -z "${version}" ]]; then
     echo "Required env var 'version' is not set"
