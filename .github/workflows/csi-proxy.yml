@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
-      - hostprocess/csi-proxy/**
+      - hostprocess/csi-proxy/VERSION
   workflow_dispatch:
   pull_request:
     paths:
@@ -27,15 +27,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: set env for ci
+      - name: set 'version' for ci
         if: ${{ github.event_name == 'pull_request' }}
         run: |
           echo "version=ci" >> $GITHUB_ENV
-      - name: set env for release
+      - name: set 'version' for release
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           export version=$(cat ./hostprocess/csi-proxy/VERSION)
-          echo "version=$version"
+          echo "version=$version" >> $GITHUB_ENV
+        run: |
+          export csi_proxy_version=%(cat ./hostprocess/csi-proxy/CSI_PROXY_VERSION)
+          echo "csi_proxy_version=$csi_proxy_version" >> $GITHUB_ENV
       - name: build image
         run: |
           cd hostprocess/csi-proxy
