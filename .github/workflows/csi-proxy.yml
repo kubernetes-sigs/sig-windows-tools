@@ -36,9 +36,6 @@ jobs:
         run: |
           export version=$(cat ./hostprocess/csi-proxy/VERSION)
           echo "version=$version" >> $GITHUB_ENV
-        run: |
-          export csi_proxy_version=%(cat ./hostprocess/csi-proxy/CSI_PROXY_VERSION)
-          echo "csi_proxy_version=$csi_proxy_version" >> $GITHUB_ENV
       - name: build image
         run: |
           cd hostprocess/csi-proxy
