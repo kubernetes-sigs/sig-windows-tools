@@ -39,4 +39,4 @@ jobs:
       - name: build image
         run: |
           cd hostprocess/csi-proxy
-          ./build.sh
+          ./build.sh --push
