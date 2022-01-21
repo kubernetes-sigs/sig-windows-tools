@@ -1,19 +1,29 @@
 #!/bin/bash
 set -e
 
-for i in "$@"; do
-  case $i in
-    --push)
+args=$(getopt -o v:p -l version:,push -- "$@")
+eval set -- "$args"
+
+while [ $# -ge 1 ]; do
+  case "$1" in
+    --)
+      shift
+      break
+      ;;
+    -v|--version)
+      version="$2"
+      shift 
+      ;;
+    -p|--push)
       push="1"
       shift
       ;;
-    *)
-    ;;
   esac
+  shift
 done
 
-if [[ -z "${version}" ]]; then
-  echo "Required env var 'version' is not set"
+if [[ -z "$version" ]]; then
+  echo "--version is required"
   exit 1
 fi
 echo "Using version ${version}"

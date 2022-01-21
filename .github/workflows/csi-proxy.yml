@@ -27,16 +27,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: set 'version' for ci
+      - name: build image for ci
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          echo "version=ci" >> $GITHUB_ENV
-      - name: set 'version' for release
+          cd hostprocess/csi-proxy
+          ./build.sh --version ci
+      - name: build image for release
         if: ${{ github.event_name != 'pull_request' }}
         run: |
-          export version=$(cat ./hostprocess/csi-proxy/VERSION)
-          echo "version=$version" >> $GITHUB_ENV
-      - name: build image
-        run: |
           cd hostprocess/csi-proxy
-          ./build.sh --push
+          export version=$(cat ./hostprocess/csi-proxy/VERSION)
+          ./build.sh --version $version --push
