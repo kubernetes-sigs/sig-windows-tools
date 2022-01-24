@@ -1,0 +1,15 @@
+ARG REGISTRY=mcr.microsoft.com/windows
+ARG WINDOWS_BASE_IMAGE=nanoserver
+ARG WINDOWS_VERSION=1809
+
+FROM --platform=linux/amd64 golang:1.16 as builder
+ARG CSI_PROXY_VERSION=v1.0.2
+RUN git clone https://github.com/kubernetes-csi/csi-proxy.git /go/csi-proxy &&\
+    cd /go/csi-proxy &&\
+    git checkout tags/${CSI_PROXY_VERSION} &&\
+    make build
+
+FROM ${REGISTRY}/${WINDOWS_BASE_IMAGE}:${WINDOWS_VERSION}
+COPY --from=builder /go/csi-proxy/bin/csi-proxy.exe /csi-proxy.exe
+ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;"
+ENTRYPOINT ["csi-proxy.exe", "-v", "4"]
