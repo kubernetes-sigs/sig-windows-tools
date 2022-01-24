@@ -36,5 +36,5 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           cd hostprocess/csi-proxy
-          export version=$(cat ./hostprocess/csi-proxy/VERSION)
+          export version=$(cat VERSION)
           ./build.sh --version $version --push
