@@ -26,6 +26,7 @@ data:
 
     mkdir -force /host/var/lib/kube-proxy/var/run/secrets/kubernetes.io/serviceaccount
     mkdir -force /host/k/kube-proxy
+    mkdir -force /host/utils
 
     cp -force /k/kube-proxy/* /host/k/kube-proxy
     cp -force /var/lib/kube-proxy/* /host/var/lib/kube-proxy
@@ -36,9 +37,15 @@ data:
     # wget <download-path-to-kube-proxy.exe> -outfile k/kube-proxy/kube-proxy.exe
     cp -force /k/kube-proxy/* /host/k/kube-proxy
 
+    # Reserve kube-proxy source VIP by calling PowerShell on the host via wins.
+    cp -force /var/lib/kube-proxy-windows/reserve-source-vip.ps1 /host/k/kube-proxy
+    cp -force /utils/exec_ps.exe /host/utils/exec_ps.exe
+    wins cli process run --path /utils/exec_ps.exe --args "--file=/k/kube-proxy/reserve-source-vip.ps1 --params=vxlan0"
+
     $cniConfFile = Get-NetConfFile
     $networkName = (Get-Content "/host/etc/cni/net.d/$cniConfFile" | ConvertFrom-Json).name
-    $sourceVip = ($env:POD_IP -split "\.")[0..2] + 0 -join "."
+    $sourceVip = ((cat /host/sourcevip/sourceVip.json | ConvertFrom-Json).ip4.ip -split '/')[0]
+
     yq w -i /host/var/lib/kube-proxy/config.conf winkernel.sourceVip $sourceVip
     yq w -i /host/var/lib/kube-proxy/config.conf winkernel.networkName $networkName
     yq w -i /host/var/lib/kube-proxy/config.conf featureGates.WinOverlay true
@@ -47,6 +54,54 @@ data:
     # Start the kube-proxy as a wins process on the host.
     # Note that this will rename kube-proxy.exe to rancher-wins-kube-proxy.exe on the host!
     wins cli process run --path /k/kube-proxy/kube-proxy.exe --args "--v=6 --config=/var/lib/kube-proxy/config.conf --hostname-override=$env:NODE_NAME --feature-gates=WinOverlay=true"
+
+  reserve-source-vip.ps1: |
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string]$NetworkName
+    )
+
+    $ErrorActionPreference = "Stop"
+
+    mkdir -force c:/sourcevip | Out-Null
+    $sourceVipJson = [io.Path]::Combine("c:/", "sourcevip",  "sourceVip.json")
+    $sourceVipRequest = [io.Path]::Combine("c:/", "sourcevip", "sourceVipRequest.json")
+
+    if (Test-Path $sourceVipJson) {
+        $sourceVipJSONData = Get-Content $sourceVipJson | ConvertFrom-Json
+        $vip = $sourceVipJSONData.ip4.ip.Split("/")[0]
+        Write-Output "Source VIP already reserved: $vip"
+        exit 0
+    }
+
+    $hnsNetwork = Get-HnsNetwork | ? Name -EQ $NetworkName.ToLower()
+    $subnet = $hnsNetwork.Subnets[0].AddressPrefix
+
+    $ipamConfig = @"
+    {"cniVersion": "0.2.0", "name": "$NetworkName", "ipam":{"type":"host-local","ranges":[[{"subnet":"$subnet"}]],"dataDir":"/var/lib/cni/networks"}}
+    "@
+
+    Write-Host "ipam sourcevip request: $ipamConfig"
+    $ipamConfig | Out-File $sourceVipRequest
+
+    $env:CNI_COMMAND="ADD"
+    $env:CNI_CONTAINERID="dummy"
+    $env:CNI_NETNS="dummy"
+    $env:CNI_IFNAME="dummy"
+    $env:CNI_PATH="c:\opt\cni\bin" #path to host-local.exe
+
+    # reserve an ip address for source VIP, a requirement for kubeproxy in overlay mode
+    Get-Content $sourceVipRequest | c:/opt/cni/bin/host-local.exe | Out-File $sourceVipJson
+
+    try {
+        $sourceVipJSONData = Get-Content $sourceVipJson | ConvertFrom-Json
+        $vip = $sourceVipJSONData.ip4.ip.Split("/")[0]
+    } catch {
+        Write-Output "Failed to reserve source VIP"
+        Remove-Item -Force $sourceVipJson
+        exit 1
+    }
+    Write-Output "Source VIP reserved: $vip"
 
 kind: ConfigMap
 apiVersion: v1

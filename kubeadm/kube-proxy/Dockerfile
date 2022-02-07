@@ -1,6 +1,13 @@
 ARG BASE="mcr.microsoft.com/powershell:nanoserver-1809"
 ARG k8sVersion="v1.19.3"
 
+FROM --platform=linux/amd64 golang as gobuilder
+ENV GOOS=windows
+ENV GOARCH=amd64
+WORKDIR /build
+ADD exec_ps.go .
+RUN go build -o exec_ps.exe exec_ps.go
+
 FROM --platform=linux/amd64 curlimages/curl as bins
 ARG k8sVersion
 
@@ -19,4 +26,5 @@ ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
 USER ContainerAdministrator
 
 COPY --from=bins /utils /utils
+COPY --from=gobuilder /build/exec_ps.exe /utils/exec_ps.exe
 COPY --from=bins /kube-proxy /k/kube-proxy
