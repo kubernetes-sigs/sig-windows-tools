@@ -12,7 +12,7 @@ RUN unzip cni.zip
 
 FROM $BASE
 
-ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
+ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;"
 
 WORKDIR /calico
 COPY --from=bins /cni/CalicoWindows/calico-node.exe /calico
