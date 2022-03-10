@@ -12,7 +12,7 @@ RUN unzip cni.zip
 
 FROM $BASE
 
-ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
+ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;"
 
 COPY --from=bins /cni/CalicoWindows/cni/calico.exe /calico/cni/calico.exe
 COPY --from=bins /cni/CalicoWindows/cni/calico-ipam.exe /calico/cni/calico-ipam.exe

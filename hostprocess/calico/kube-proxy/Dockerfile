@@ -12,9 +12,9 @@ RUN curl -LO https://raw.githubusercontent.com/microsoft/SDN/master/Kubernetes/w
 
 FROM $BASE
 
-ENV PATH="C:\Program Files\PowerShell;C:\utils;C:\Windows\system32;C:\Windows;"
+ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;"
 
-Add start.ps1 /kube-proxy/start.ps1
+ADD start.ps1 /kube-proxy/start.ps1
 COPY --from=bins /kube-proxy/kube-proxy.exe /kube-proxy/kube-proxy.exe
 COPY --from=bins /kube-proxy/hns.psm1 /kube-proxy/hns.psm1
 
