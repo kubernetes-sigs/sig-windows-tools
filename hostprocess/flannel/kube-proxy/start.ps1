@@ -29,10 +29,10 @@ function GetSourceVip($NetworkName)
         $env:CNI_CONTAINERID="dummy"
         $env:CNI_NETNS="dummy"
         $env:CNI_IFNAME="dummy"
-        $env:CNI_PATH="c:\opt\cni\bin" #path to host-local.exe
+        $env:CNI_PATH="$env:CNI_BIN_PATH" #path to host-local.exe
 
         # reserve an ip address for source VIP, a requirement for kubeproxy in overlay mode
-        Get-Content $sourceVipRequest | c:/opt/cni/bin/host-local.exe | Out-File $sourceVipJson
+        Get-Content $sourceVipRequest | powershell /c "& '$env:CNI_BIN_PATH/host-local.exe'" | Out-File $sourceVipJson
 
         Remove-Item env:CNI_COMMAND
         Remove-Item env:CNI_CONTAINERID
@@ -61,7 +61,7 @@ Write-Host "sourceip: $vip"
 
 $arguements = "--v=6",
         "--hostname-override=$env:NODE_NAME",
-        "--feature-gates=WinOverlay=true,IPv6DualStack=false",
+        "--feature-gates=WinOverlay=true",
         "--proxy-mode=kernelspace",
         "--source-vip=$vip",  
         "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf"

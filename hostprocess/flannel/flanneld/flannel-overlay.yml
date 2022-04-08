@@ -99,7 +99,7 @@ spec:
         operator: Exists
       containers:
       - name: kube-flannel
-        image: sigwindowstools/flannel:v0.14.0-hostprocess
+        image: sigwindowstools/flannel:v0.17.0-hostprocess
         imagePullPolicy: Always
         volumeMounts:
         - name: flannel-cfg
@@ -111,6 +111,10 @@ spec:
         - name: kube-proxy
           mountPath: /flannel-config-file
         env:
+        - name: CNI_BIN_PATH
+          value: C:\\Program Files\\containerd\\cni\\bin
+        - name: CNI_CONFIG_PATH
+          value: C:\\Program Files\\containerd\\cni\\conf
         - name: POD_NAME
           valueFrom:
             fieldRef:
