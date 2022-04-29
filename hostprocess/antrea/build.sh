@@ -1,6 +1,6 @@
 #!/bin/bash
 # https://devhints.io/bash
-repository=${repository:-"projects-stg.registry.vmware.com/tkgdev/yzac"}
+repository=${repository:-"sigwindowstools"}
 
 docker buildx create --name img-builder --use --platform windows/amd64
 trap 'docker buildx rm img-builder' EXIT
