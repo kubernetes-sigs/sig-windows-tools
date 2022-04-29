@@ -21,7 +21,7 @@ spec:
           runAsUserName: "NT AUTHORITY\\system"
       hostNetwork: true
       containers:
-      - image: projects-stg.registry.vmware.com/tkgdev/yzac/kube-proxy@sha256:faaaf2e8d29bf240b53955840050c3e968537970a28277bd94155ed048e2b051
+      - image: sigwindowstools/kube-proxy
         args: ["$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/start.ps1"]
         workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/"
         name: kube-proxy
