@@ -18,7 +18,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.5
+        go-version: 1.18.2
     
     - name: Create drop folder
       run: mkdir -p $GITHUB_WORKSPACE/output/bin
@@ -31,7 +31,7 @@ jobs:
         git clone https://github.com/Microsoft/hcsshim
         cd hcsshim
         go build -o $GITHUB_WORKSPACE/output/bin/containerd-shim-runhcs-v1.exe ./cmd/containerd-shim-runhcs-v1
-        git rev-parse HEAD > $GITHUB_WORKSPACE/output/bin/hcsshim-revision.txt
+        git rev-parse HEAD | tee $GITHUB_WORKSPACE/output/bin/hcsshim-revision.txt
 
     - name: Build containerd
       env:
@@ -43,7 +43,7 @@ jobs:
         make binaries
         cp ./bin/containerd.exe $GITHUB_WORKSPACE/output/bin
         cp ./bin/ctr.exe $GITHUB_WORKSPACE/output/bin
-        git rev-parse HEAD > $GITHUB_WORKSPACE/output/bin/containerd-revision.txt
+        git rev-parse HEAD | tee $GITHUB_WORKSPACE/output/bin/containerd-revision.txt
 
     - name: make windows-containerd zip
       run: |
