@@ -61,7 +61,6 @@ Write-Host "sourceip: $vip"
 
 $arguements = "--v=6",
         "--hostname-override=$env:NODE_NAME",
-        "--feature-gates=WinOverlay=true,IPv6DualStack=false",
         "--proxy-mode=kernelspace",
         "--source-vip=$vip",  
         "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf"
