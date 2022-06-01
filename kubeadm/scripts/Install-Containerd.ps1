@@ -128,7 +128,13 @@ mkdir -Force c:\opt\cni\bin | Out-Null
 mkdir -Force c:\etc\cni\net.d | Out-Null
 
 Write-Output "Getting SDN CNI binaries"
-DownloadFile "c:\opt\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/v0.2.0/windows-container-networking-cni-amd64-v0.2.0.zip
+Write-Output "Getting SDN CNI binaries"
+if ([System.Environment]::OSVersion.Version.Build -ge 20348) {
+  $cni_version = "v0.3.0"
+} else {
+  $cni_version = "v0.2.0"
+}
+DownloadFile "c:\opt\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/$cni_version/windows-container-networking-cni-amd64-$cni_version.zip
 Expand-Archive -Path "c:\opt\cni\cni-plugins.zip" -DestinationPath "c:\opt\cni\bin" -Force
 
 Write-Output "Creating network config for nat network"
@@ -139,7 +145,7 @@ $subnet = CalculateSubNet -gateway $gateway -prefixLength $prefixLength
 
 @"
 {
-    "cniVersion": "0.2.0",
+    "cniVersion": "$cni_version",
     "name": "nat",
     "type": "nat",
     "master": "Ethernet",
