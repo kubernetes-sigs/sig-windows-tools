@@ -37,6 +37,7 @@ jobs:
       env:
         GOOS: windows
         GOARCH: amd64
+        VERSION: v1.7.0+unknown
       run: |
         git clone https://github.com/containerd/containerd.git
         cd containerd
