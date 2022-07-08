@@ -15,7 +15,7 @@ Kubernetes version to download and use
 Container that Kubernetes will use. (Docker or containerD)
 
 .EXAMPLE
-PS> .\PrepareNode.ps1 -KubernetesVersion v1.19.3 -ContainerRuntime containerD
+PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
 
 #>
 
@@ -91,6 +91,15 @@ mkdir -force C:\var\lib\kubelet\etc\kubernetes
 mkdir -force C:\etc\kubernetes\pki
 New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
 
+# dockershim related flags (--image-pull-progress-deadline=20m and --network-plugin=cni)  are removed in k8s v1.24
+# Link to changelog: https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.24.md
+
+$cmd_commands=@("C:\k\kubelet.exe ", '$global:KubeletArgs ', '--cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki ', "--config=/var/lib/kubelet/config.yaml ", "--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf ", "--kubeconfig=/etc/kubernetes/kubelet.conf ", '--hostname-override=$(hostname) ', '--pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:3.6`" ', "--enable-debugging-handlers ", "--cgroups-per-qos=false ", '--enforce-node-allocatable=`"`" ', '--resolv-conf=`"`" ', "--log-dir=/var/log/kubelet ", "--logtostderr=false ")
+[version]$CurrentVersion = $($KubernetesVersion.Split("v") | Select -Index 1)
+[version]$V1_24_Version = '1.24'
+if ($CurrentVersion -lt $V1_24_Version) {
+    $cmd_commands = $cmd_commands + "--network-plugin=cni " + "--image-pull-progress-deadline=20m "
+}
 $StartKubeletFileContent = '$FileContent = Get-Content -Path "/var/lib/kubelet/kubeadm-flags.env"
 $global:KubeletArgs = $FileContent.TrimStart(''KUBELET_KUBEADM_ARGS='').Trim(''"'')
 
@@ -104,8 +113,7 @@ if ($global:containerRuntime -eq "Docker") {
     }
 }
 
-$cmd = "C:\k\kubelet.exe $global:KubeletArgs --cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki --config=/var/lib/kubelet/config.yaml --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --hostname-override=$(hostname) --pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:3.6`" --enable-debugging-handlers --cgroups-per-qos=false --enforce-node-allocatable=`"`" --network-plugin=cni --resolv-conf=`"`" --log-dir=/var/log/kubelet --logtostderr=false --image-pull-progress-deadline=20m"
-
+$cmd = "' + $cmd_commands + '"
 Invoke-Expression $cmd'
 $StartKubeletFileContent = $StartKubeletFileContent -replace "{{CONTAINER_RUNTIME}}", "`"$ContainerRuntime`""
 Set-Content -Path $global:StartKubeletScript -Value $StartKubeletFileContent
