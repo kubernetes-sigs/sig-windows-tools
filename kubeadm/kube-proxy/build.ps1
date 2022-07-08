@@ -1,7 +1,7 @@
 param(
     [string]$image = "sigwindowstools/kube-proxy",
     [switch]$push,
-    [version]$minVersion = "1.17.0"
+    [version]$minVersion = "1.22.0"
 )
 
 $output="docker"
