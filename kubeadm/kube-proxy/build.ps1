@@ -1,7 +1,25 @@
+<#
+.SYNOPSIS
+Script that builds kube-proxy images
+
+.DESCRIPTION
+This script build all kube-proxy images.
+It also has the possibility to build only a specific kube-proxy image. (optional)
+
+.PARAMETER KubeProxyVersion (optional)
+Kubernetes version to specify which kube-proxy image to build
+
+.EXAMPLE
+PS> .\build.ps1 -KubeProxyVersion v1.24.2
+
+#>
+
 param(
+    [parameter(Mandatory = $false)]
+    [string] $KubeProxyVersion,
     [string]$image = "sigwindowstools/kube-proxy",
     [switch]$push,
-    [version]$minVersion = "1.17.0"
+    [version]$minVersion = "1.22.0"
 )
 
 $output="docker"
@@ -33,7 +51,19 @@ function Build-KubeProxy([string]$version)
     }
 }
 
-$versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
+if($KubeProxyVersion)
+{
+    if (!$KubeProxyVersion.StartsWith("v"))
+    {
+        $KubeProxyVersion = "v" + $KubeProxyVersion
+    }
+    $versions = @($KubeProxyVersion)
+}
+else 
+{
+    $versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
+}
+
 foreach($version in $versions)
 {
     if ($version -match "^v(\d+\.\d+\.\d+)$")
