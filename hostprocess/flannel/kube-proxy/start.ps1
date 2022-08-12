@@ -29,10 +29,10 @@ function GetSourceVip($NetworkName)
         $env:CNI_CONTAINERID="dummy"
         $env:CNI_NETNS="dummy"
         $env:CNI_IFNAME="dummy"
-        $env:CNI_PATH="c:\opt\cni\bin" #path to host-local.exe
+        $env:CNI_PATH="$env:CNI_BIN_PATH" #path to host-local.exe
 
         # reserve an ip address for source VIP, a requirement for kubeproxy in overlay mode
-        Get-Content $sourceVipRequest | c:/opt/cni/bin/host-local.exe | Out-File $sourceVipJson
+        Get-Content $sourceVipRequest | powershell /c "& '$env:CNI_BIN_PATH/host-local.exe'" | Out-File $sourceVipJson
 
         Remove-Item env:CNI_COMMAND
         Remove-Item env:CNI_CONTAINERID
@@ -48,7 +48,7 @@ function GetSourceVip($NetworkName)
 # This is a workaround since the go-client doesn't know about the path $env:CONTAINER_SANDBOX_MOUNT_POINT
 # go-client is going to be address in a future release:
 #   https://github.com/kubernetes/kubernetes/pull/104490
-# We could address this in kubeamd as well: 
+# We could address this in kubeamd as well:
 #   https://github.com/kubernetes/kubernetes/blob/9f0f14952c51e7a5622eac05c541ba20b5821627/cmd/kubeadm/app/phases/addons/proxy/manifests.go
 Write-Host "Write files so the kubeconfig points to correct locations"
 mkdir -force /var/lib/kube-proxy/
@@ -56,18 +56,17 @@ mkdir -force /var/lib/kube-proxy/
 cp $env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf /var/lib/kube-proxy/kubeconfig.conf
 
 Write-Host "Finding sourcevip"
-$vip = GetSourceVip -NetworkName $env:KUBE_NETWORK 
+$vip = GetSourceVip -NetworkName $env:KUBE_NETWORK
 Write-Host "sourceip: $vip"
 
 $arguements = "--v=6",
         "--hostname-override=$env:NODE_NAME",
+        "--feature-gates=WinOverlay=true",
         "--proxy-mode=kernelspace",
-        "--source-vip=$vip",  
+        "--source-vip=$vip",
         "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf"
 
 $exe = "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/kube-proxy.exe " + ($arguements -join " ")
 
 Write-Host "Starting $exe"
 Invoke-Expression $exe
-
-

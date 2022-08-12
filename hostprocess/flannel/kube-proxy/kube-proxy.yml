@@ -21,7 +21,7 @@ spec:
           runAsUserName: "NT AUTHORITY\\system"
       hostNetwork: true
       containers:
-      - image: sigwindowstools/kube-proxy:v1.22.4-flannel-hostprocess
+      - image: sigwindowstools/kube-proxy:v1.24.3-flannel-hostprocess
         name: kube-proxy
         imagePullPolicy: Always
         env:
@@ -29,6 +29,8 @@ spec:
         # https://github.com/kubernetes/kubernetes/blob/b0bc8adbc2178e15872f9ef040355c51c45d04bb/pkg/proxy/winkernel/proxier.go#L155-L158
         - name: KUBE_NETWORK
           value: "flannel.4096"
+        - name: CNI_BIN_PATH
+          value: C:\\Program Files\\containerd\\cni\\bin
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -50,7 +52,7 @@ spec:
       volumes:
       - configMap:
           name: kube-proxy
-          item:     
+          item:
         name: kube-proxy
   updateStrategy:
     type: RollingUpdate
