@@ -1,7 +1,4 @@
-# Note this image doesn't really mater for hostprocess
-# the files in the image are copied to $env:CONTAINER_SANDBOX_MOUNT_POINT on the host
-# but the file system is the Host NOT the container
-ARG BASE="mcr.microsoft.com/windows/nanoserver:1809"
+ARG BASE="mcr.microsoft.com/oss/kubernetes/windows-host-process-containers-base-image:v0.1.0"
 
 FROM --platform=linux/amd64 curlimages/curl as bins
 ARG k8sVersion="v1.22.0"
