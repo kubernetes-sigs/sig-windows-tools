@@ -3,6 +3,21 @@ set -e
 set -u
 set -o pipefail
 
+## DESCRIPTION:
+##
+## This script queries all repos in a given github org and adds and issues 
+## with label 'sig/windows' to a specified project board.
+##
+## REREQS:
+##
+## This script assumes there is a github PAT in the GITHUB_TOKEN env var
+## that was created with the following permissions:
+##   - repo (all)
+##   - read:org
+##   - user (all)
+##   - read:enterprise
+##   - project (all)
+
 GH_ORG=${GH_ORG:-'kubernetes'}
 PROJECT_NUMBER=${PROJECT_NUMBER:-'82'}
 

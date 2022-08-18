@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: sig-windows-project-board-sync
+
+on:
+  schedule:
+    - cron: "0 14 * * *" # Every day at 14:00 UTC / 6:00 PST
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: sig-windows-project-board-sync
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: sync SIG-Windows project - kubernetes org
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYNC_PROJECTS_PAT }}
+        run: |
+          ./hack/sync-project-board.sh
