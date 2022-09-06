@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: test-kube-proxy-images
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Every day at 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Run script
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Test kube-proxy images
+      run: powershell.exe ./hack/test-kube-proxy-images.ps1
