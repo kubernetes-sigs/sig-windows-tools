@@ -50,7 +50,6 @@ spec:
       volumes:
       - configMap:
           name: kube-proxy
-          item:     
         name: kube-proxy
   updateStrategy:
     type: RollingUpdate
