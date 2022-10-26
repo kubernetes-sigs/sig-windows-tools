@@ -22,6 +22,7 @@ ContainerD usage is forced.
 .PARAMETER SuppressHints
 Suppresses hints at the end of work.
 This little help introduce dependency on git to build copy/paste-able code snippets.
+Flag presence makes this script free of that when you need it.
 
 .EXAMPLE
 PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
@@ -29,6 +30,8 @@ PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
 .EXAMPLE
 PS> .\PrepareNode.ps1 -UseHostProcess -KubernetesVersion # v1.23.0+
 
+Please note, there is no reason to give a choice for a container runtime in this case.
+ContainerD runtime will be used forcibly.
 #>
 
 [CmdletBinding(
