@@ -14,6 +14,13 @@ Kubernetes version to download and use
 .PARAMETER ContainerRuntime
 Container that Kubernetes will use. (Docker or containerD)
 
+.PARAMETER UseHostProcess
+Declares that HostProcess model is in use. Some code should be omitted.
+
+.PARAMETER SuppressHints
+Suppresses hints at the end of work.
+This little help introduce dependency on git to build copy/paste-able code snippets.
+
 .EXAMPLE
 PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
 
@@ -24,7 +31,11 @@ Param(
     [string] $KubernetesVersion,
     [parameter(HelpMessage="Container runtime that Kubernets will use")]
     [ValidateSet("containerD", "Docker")]
-    [string] $ContainerRuntime = "Docker"
+    [string] $ContainerRuntime = "Docker",
+    [parameter(HelpMessage="Declares that HostProcess model is in use")]
+    [switch] $UseHostProcess,
+    [parameter(HelpMessage="Suppresses hints at the end of work")]
+    [switch] $SuppressHints
 )
 $ErrorActionPreference = 'Stop'
 
@@ -75,7 +86,7 @@ if ($ContainerRuntime -eq "Docker") {
     # Install-containerd.ps1 joins pods to the host network.
     Write-Host "Creating Docker host network"
     docker network create -d nat host
-} elseif ($ContainerRuntime -eq "containerD") {
+} elseif ($ContainerRuntime -eq "containerD" -And (-Not $UseHostProcess.IsPresent)) {
     DownloadFile "c:\k\hns.psm1" https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
     Import-Module "c:\k\hns.psm1"
     # TODO(marosset): check if network already exists before creatation
@@ -148,22 +159,24 @@ New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Directio
 
 Write-Output "Please remember that after you have joined the node to the cluster, that you have to apply the cni daemonset/service and the kube-proxy"
 Write-Output "Also remember that for kube-proxy you have to change the its version from the name of the image in the kube-proxy.yml to that of your kubernetes version `n"
-# rancher commands
-Write-Output "In case you use rancher, use the following commands:"
-Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`") -Replace 'VERSION', '$KubernetesVersion' | Set-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`" `n"
-Write-Output "For Linux, you can use the following command: "
-Write-Output "sed -i 's/VERSION/$KubernetesVersion/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep kubeadm)`n"
-# flannel commands
-Write-Output "In case you use flannel, use the following commands:"
-Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`" `n"
-Write-Output "For Linux, you can use the following command: "
-Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep flannel)`n"
-# calico commands
-Write-Output "In case you use calico, use the following commands:"
-Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`" `n"
-Write-Output "For Linux, you can use the following command: "
-# - image: sigwindowstools/kube-proxy:v1.24.2-flannel-hostprocess
-Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep calico)`n"
+if (-Not $SuppressHints.IsPresent) {
+    # rancher commands
+    Write-Output "In case you use rancher, use the following commands:"
+    Write-Output "For Windows you can use the following command: "
+    Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`") -Replace 'VERSION', '$KubernetesVersion' | Set-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`" `n"
+    Write-Output "For Linux, you can use the following command: "
+    Write-Output "sed -i 's/VERSION/$KubernetesVersion/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep kubeadm)`n"
+    # flannel commands
+    Write-Output "In case you use flannel, use the following commands:"
+    Write-Output "For Windows you can use the following command: "
+    Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`" `n"
+    Write-Output "For Linux, you can use the following command: "
+    Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep flannel)`n"
+    # calico commands
+    Write-Output "In case you use calico, use the following commands:"
+    Write-Output "For Windows you can use the following command: "
+    Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`" `n"
+    Write-Output "For Linux, you can use the following command: "
+    # - image: sigwindowstools/kube-proxy:v1.24.2-flannel-hostprocess
+    Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep calico)`n"
+}

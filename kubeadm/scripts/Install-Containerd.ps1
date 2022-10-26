@@ -15,16 +15,30 @@ ContainerD version to download and use.
 .PARAMETER netAdapterName
 Name of network adapter to use when configuring basic nat network.
 
+.PARAMETER UseHostProcess
+Declares that HostProcess model is in use. Some code should be omitted.
+
 .EXAMPLE
 PS> .\Install-Conatinerd.ps1
 
 #>
 
+[CmdletBinding(
+    DefaultParameterSetName="kubeadm"
+)]
 Param(
     [parameter(HelpMessage = "ContainerD version to use")]
     [string] $ContainerDVersion = "1.6.8",
-    [parameter(HelpMessage = "Name of network adapter to use when configuring basic nat network")]
-    [string] $netAdapterName = "Ethernet"
+    [parameter(
+        HelpMessage = "Name of network adapter to use when configuring basic nat network",
+        ParameterSetName = "kubeadm"
+    )]
+    [string] $netAdapterName = "Ethernet",
+    [parameter(
+        HelpMessage = "Declares that HostProcess model is in use",
+        ParameterSetName = "hostprocess"
+    )]
+    [switch] $UseHostProcess
 )
 
 $ErrorActionPreference = 'Stop'
