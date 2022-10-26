@@ -11,6 +11,7 @@ This script
 
 .PARAMETER ContainerDVersion
 ContainerD version to download and use.
+For HostProcess containers minimal version is 1.6.0.
 
 .PARAMETER netAdapterName
 Name of network adapter to use when configuring basic nat network.
@@ -20,6 +21,9 @@ Declares that HostProcess model is in use. Some code should be omitted.
 
 .EXAMPLE
 PS> .\Install-Conatinerd.ps1
+
+.EXAMPLE
+PS> .\Install-Containerd.ps1 -UseHostProcess -ContainerDVersion # 1.6.0+
 
 #>
 
@@ -79,6 +83,16 @@ if (-not (ValidateWindowsFeatures)) {
 
     Write-Output "Please reboot and re-run this script."
     exit 0
+}
+
+if ($UseHostProcess.IsPresent) {
+    $minimalVersion = [version]::new(1, 6, 0)
+    if ([version]::new($ContainerDVersion) -lt $minimalVersion) {
+        Write-Error `
+            ("Incompatible ContainerD version $ContainerDVersion requested. " +
+            "Minimal required version is $minimalVersion.")
+        exit 1
+    }
 }
 
 Write-Output "Getting ContainerD binaries"

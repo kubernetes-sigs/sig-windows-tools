@@ -10,6 +10,7 @@ This script assists with joining a Windows node to a cluster.
 
 .PARAMETER KubernetesVersion
 Kubernetes version to download and use
+For HostProcess containers minimal version is 1.23.0.
 
 .PARAMETER ContainerRuntime
 Container that Kubernetes will use. (Docker or containerD)
@@ -23,6 +24,9 @@ This little help introduce dependency on git to build copy/paste-able code snipp
 
 .EXAMPLE
 PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
+
+.EXAMPLE
+PS> .\PrepareNode.ps1 -UseHostProcess -KubernetesVersion # v1.23.0+
 
 #>
 
@@ -45,6 +49,16 @@ function DownloadFile($destination, $source) {
 
     if (!$?) {
         Write-Error "Download $source failed"
+        exit 1
+    }
+}
+
+if ($UseHostProcess.IsPresent) {
+    $minimalVersion = [version]::new(1, 23, 0)
+    if ([version]::new($KubernetesVersion) -lt $minimalVersion) {
+        Write-Error `
+            ("Incompatible Kubernetes version $KubernetesVersion requested. " +
+            "Minimal required version is $minimalVersion.")
         exit 1
     }
 }
