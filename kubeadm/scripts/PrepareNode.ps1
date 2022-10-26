@@ -17,6 +17,7 @@ Container that Kubernetes will use. (Docker or containerD)
 
 .PARAMETER UseHostProcess
 Declares that HostProcess model is in use. Some code should be omitted.
+ContainerD usage is forced.
 
 .PARAMETER SuppressHints
 Suppresses hints at the end of work.
@@ -30,13 +31,22 @@ PS> .\PrepareNode.ps1 -UseHostProcess -KubernetesVersion # v1.23.0+
 
 #>
 
+[CmdletBinding(
+    DefaultParameterSetName="kubeadm"
+)]
 Param(
     [parameter(Mandatory = $true, HelpMessage="Kubernetes version to use")]
     [string] $KubernetesVersion,
-    [parameter(HelpMessage="Container runtime that Kubernets will use")]
+    [parameter(
+        HelpMessage="Container runtime that Kubernets will use",
+        ParameterSetName="kubeadm"
+    )]
     [ValidateSet("containerD", "Docker")]
     [string] $ContainerRuntime = "Docker",
-    [parameter(HelpMessage="Declares that HostProcess model is in use")]
+    [parameter(
+        HelpMessage="Declares that HostProcess model is in use",
+        ParameterSetName="hostprocess"
+    )]
     [switch] $UseHostProcess,
     [parameter(HelpMessage="Suppresses hints at the end of work")]
     [switch] $SuppressHints
@@ -61,6 +71,7 @@ if ($UseHostProcess.IsPresent) {
             "Minimal required version is $minimalVersion.")
         exit 1
     }
+    $ContainerRuntime = "containerD"
 }
 
 if ($ContainerRuntime -eq "Docker") {
