@@ -15,7 +15,7 @@ Kubernetes version to download and use
 Container that Kubernetes will use. (Docker or containerD)
 
 .EXAMPLE
-PS> .\PrepareNode.ps1 -KubernetesVersion v1.24.2 -ContainerRuntime containerD
+PS> .\PrepareNode.ps1 -KubernetesVersion v1.25.3 -ContainerRuntime containerD
 
 #>
 
@@ -67,7 +67,6 @@ $env:Path += ";$global:KubernetesPath"
 
 DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
-DownloadFile "$global:KubernetesPath\wins.exe" https://github.com/rancher/wins/releases/download/v0.0.4/wins.exe
 
 if ($ContainerRuntime -eq "Docker") {
     # Create host network to allow kubelet to schedule hostNetwork pods
@@ -81,10 +80,6 @@ if ($ContainerRuntime -eq "Docker") {
     # TODO(marosset): check if network already exists before creatation
     New-HnsNetwork -Type NAT -Name nat
 }
-
-Write-Host "Registering wins service"
-wins.exe srv app run --register
-start-service rancher-wins
 
 mkdir -force C:\var\log\kubelet
 mkdir -force C:\var\lib\kubelet\etc\kubernetes

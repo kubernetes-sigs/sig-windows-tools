@@ -137,27 +137,6 @@ $prefixLength = (Get-NetIPAddress -InterfaceAlias $netAdapterName -AddressFamily
 
 $subnet = CalculateSubNet -gateway $gateway -prefixLength $prefixLength
 
-@"
-{
-    "cniVersion": "0.2.0",
-    "name": "nat",
-    "type": "nat",
-    "master": "Ethernet",
-    "ipam": {
-        "subnet": "$subnet",
-        "routes": [
-            {
-                "GW": "$gateway"
-            }
-        ]
-    },
-    "capabilities": {
-        "portMappings": true,
-        "dns": true
-    }
-}
-"@ | Set-Content "c:\etc\cni\net.d\0-containerd-nat.json" -Force
-
 Write-Output "Registering ContainerD as a service"
 containerd.exe --register-service
 
