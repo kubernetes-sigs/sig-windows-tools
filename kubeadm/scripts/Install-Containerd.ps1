@@ -40,48 +40,6 @@ function DownloadFile($destination, $source) {
     }
 }
 
-<#
-.DESCRIPTION
-Computes a subnet for a gateway from the IPv4 IPAddress and PrefixLength properties
-for a given network adapter. This value is used for IPAM in a nat CNI config required for
-containerd.
-
-.NOTES 
-This logic is adapted from 
-https://github.com/containerd/containerd/blob/4a6b47d470d9f2dfc3d49f2819b968861dfa123e/script/setup/install-cni-windows
-
-.EXAMPLE
-PS> CalculateSubNet -gateway 172.16.5.8 -prefixLength 24
-172.16.5.0/8
-#>
-function CalculateSubNet {
-    param (
-        [string]$gateway,
-        [int]$prefixLength
-    )
-    $len = $prefixLength
-    $parts = $gateway.Split('.')
-    $result = @()
-    for ($i = 0; $i -le 3; $i++) {
-        if ($len -ge 8) {
-            $mask = 255
-
-        }
-        elseif ($len -gt 0) {
-            $mask = ((256 - 2 * (8 - $len)))
-        }
-        else {
-            $mask = 0
-        }
-        $len -= 8
-        $result += ([int]$parts[$i] -band $mask)
-    }
-
-    $subnetIp = [string]::Join('.', $result)
-    $cidr = 32 - $prefixLength
-    return "${subnetIp}/$cidr"
-}
-
 $requiredWindowsFeatures = @(
     "Containers",
     "Hyper-V",
@@ -120,22 +78,14 @@ $env:Path += ";$global:ConainterDPath"
 containerd.exe config default | Out-File "$global:ConainterDPath\config.toml" -Encoding ascii
 #config file fixups
 $config = Get-Content "$global:ConainterDPath\config.toml"
-$config = $config -replace "bin_dir = (.)*$", "bin_dir = `"c:/opt/cni/bin`""
-$config = $config -replace "conf_dir = (.)*$", "conf_dir = `"c:/etc/cni/net.d`""
+$config = $config -replace "bin_dir = (.)*$", "bin_dir = `"C:\\Program Files\\containerd\\cni\\bin`""
+$config = $config -replace "conf_dir = (.)*$", "conf_dir = `"C:\\Program Files\\containerd\\cni\\conf`""
 $config | Set-Content "$global:ConainterDPath\config.toml" -Force 
 
-mkdir -Force c:\opt\cni\bin | Out-Null
-mkdir -Force c:\etc\cni\net.d | Out-Null
-
 Write-Output "Getting SDN CNI binaries"
-DownloadFile "c:\opt\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/v0.2.0/windows-container-networking-cni-amd64-v0.2.0.zip
-Expand-Archive -Path "c:\opt\cni\cni-plugins.zip" -DestinationPath "c:\opt\cni\bin" -Force
-
-Write-Output "Creating network config for nat network"
-$gateway = (Get-NetIPAddress -InterfaceAlias $netAdapterName -AddressFamily IPv4).IPAddress
-$prefixLength = (Get-NetIPAddress -InterfaceAlias $netAdapterName -AddressFamily IPv4).PrefixLength
-
-$subnet = CalculateSubNet -gateway $gateway -prefixLength $prefixLength
+mkdir -Force $global:ConainterDPath\cni | Out-Null
+DownloadFile "$global:ConainterDPath\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/v0.2.0/windows-container-networking-cni-amd64-v0.2.0.zip
+Expand-Archive -Path "$global:ConainterDPath\cni\cni-plugins.zip" -DestinationPath "$global:ConainterDPath\cni\bin" -Force
 
 Write-Output "Registering ContainerD as a service"
 containerd.exe --register-service
