@@ -3,6 +3,10 @@
 
 You can use Kubernetes to run a mixture of Linux and Windows nodes, so you can mix Pods that run on Linux on with Pods that run on Windows. This is a guide on how to register Windows nodes to your cluster.
 
+## Warning
+
+> The instructions and scripts in the directory DO NOT configure a CNI solution for Windows nodes running containerd.
+There is a work-in-progress PR to assist in this at https://github.com/kubernetes-sigs/sig-windows-tools/pull/239
 
 ## Before you begin
 
@@ -12,20 +16,16 @@ Your Kubernetes server must be at or later than version 1.22. To check the versi
 
 - A Linux-based Kubernetes kubeadm cluster in which you have access to the control plane (see [Creating a single control-plane cluster with kubeadm](https://kubernetes-docsy-staging.netlify.app/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)).
 
-
 ## Objectives
 
 - Register a Windows node to the cluster
 - Configure networking so Pods and Services on Linux and Windows can communicate with each other
 
-
 ## Getting Started: Adding a Windows Node to Your Cluster
-
 
 ### Networking Configuration
 
 Once you have a Linux-based Kubernetes control-plane node you are ready to choose a networking solution.
-
 
 #### Configuring Flannel with rancher
 
@@ -61,7 +61,7 @@ net-conf.json: |
 
 > **Note:** The VNI must be set to 4096 and port 4789 for Flannel on Linux to interoperate with Flannel on Windows. See the [VXLAN documentation](https://github.com/coreos/flannel/blob/master/Documentation/backends.md#vxlan). for an explanation of these fields.
 
->  **Note:** To use L2Bridge/Host-gateway mode instead change the value of `Type` to `"host-gw"` and omit `VNI` and `Port`.
+> **Note:** To use L2Bridge/Host-gateway mode instead change the value of `Type` to `"host-gw"` and omit `VNI` and `Port`.
 
 3. Apply the Flannel manifest and validate
 
@@ -106,10 +106,9 @@ git clone https://github.com/kubernetes-sigs/sig-windows-tools
 kubectl apply -f sig-windows-tools/kubeadm/flannel/kube-flannel-rbac.yml
 ```
 
-
 ### Joining a Windows worker node
 
->  **Note:** All code snippets in Windows sections are to be run in a PowerShell environment with elevated permissions (Administrator) on the Windows worker node.
+> **Note:** All code snippets in Windows sections are to be run in a PowerShell environment with elevated permissions (Administrator) on the Windows worker node.
 
 1. Install ContainerD, wins, kubelet, and kubeadm.
 
@@ -124,21 +123,20 @@ cd .\sig-windows-tools\kubeadm\scripts\
 .\PrepareNode.ps1 -KubernetesVersion v1.24.3 -ContainerRuntime containerD
 ```
 
->  **Note** If you want to install another version of kubernetes, modify v1.24.3 with the version you want to install
-
+> **Note** If you want to install another version of kubernetes, modify v1.24.3 with the version you want to install
 
 2. Run `kubeadm` to join the node
->  **Note** Before joining the node, copy the file from /run/flannel/subnet.env to your windows machine to C:\run\flannel\subnet.env
->  You will need to create the folders for it
+
+> **Note** Before joining the node, copy the file from /run/flannel/subnet.env to your windows machine to C:\run\flannel\subnet.env
+> You will need to create the folders for it
 
 Use the command that was given to you when you ran `kubeadm init` on a control plane host. If you no longer have this command, or the token has expired, you can run `kubeadm token create --print-join-command` (on a control plane host) to generate a new token and join command.
 
->  **Note:** Do not forget to add `--cri-socket "npipe:////./pipe/containerd-containerd" --v=5` at the end of the join command, if you use ContainerD
+> **Note:** Do not forget to add `--cri-socket "npipe:////./pipe/containerd-containerd" --v=5` at the end of the join command, if you use ContainerD
 
 3. Install kubectl for windows (optional)
 
 For more information about it : https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
-
 
 #### Verifying your installation
 
