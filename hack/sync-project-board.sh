@@ -19,20 +19,28 @@ set -o pipefail
 ##   - project (all)
 
 GH_ORG=${GH_ORG:-'kubernetes'}
-PROJECT_NUMBER=${PROJECT_NUMBER:-'82'}
+ISSUES_PROJECT_NUMBER=${ISSUES_PROJECT_NUMBER:-'82'}
+PRS_PROJECT_NUMBER=${PRS_PROJECT_NUMBER:-'99'}
 
 echo "GH_ORG=${GH_ORG}"
 
-# Get project ID
-project_id="$(gh api graphql -f query='
+function get_project_id_from_number() {
+    project_id="$(gh api graphql -f query='
     query($org: String!, $number: Int!) {
         organization(login: $org) {
             projectV2(number: $number) {
                 id
             }
         }
-    }' -f org=${GH_ORG} -F number=${PROJECT_NUMBER} --jq '.data.organization.projectV2.id')"
-echo "project id: ${project_id}"
+    }' -f org="${GH_ORG}" -F number="$1" --jq '.data.organization.projectV2.id')"
+    echo "$project_id"
+}
+
+# Get project ID
+issues_project_id=$( get_project_id_from_number "$ISSUES_PROJECT_NUMBER" )
+echo "project id for issues (number $ISSUES_PROJECT_NUMBER): ${issues_project_id}"
+prs_project_id=$( get_project_id_from_number "$PRS_PROJECT_NUMBER" )
+echo "project id for prs (number $PRS_PROJECT_NUMBER): ${prs_project_id}"
 
 # Get list of repos in the org
 repos_json="$(gh api graphql --paginate -f query='
@@ -50,7 +58,7 @@ repos_json="$(gh api graphql --paginate -f query='
                 }
             }
         }
-    }' -f org=${GH_ORG})"
+    }' -f org="${GH_ORG}")"
 
 repos="$(jq ".data.viewer.organization.repositories.nodes[].name" <<< "$repos_json" |  tr -d '"' )"
 
@@ -71,12 +79,12 @@ do
                     }
                 }
             }
-        }' -f org=${GH_ORG} -f repo=${repo})"
+        }' -f org="${GH_ORG}" -f repo="${repo}")"
 
     num_issues=$(jq ".data.repository.issues.nodes | length" <<< "$issues_json")
     echo "  found ${num_issues} in repo"
 
-    if [ $num_issues -gt 0 ]; then
+    if [ "$num_issues" -gt 0 ]; then
         range=$((num_issues - 1))
         for i in $(seq 0 $range)
         do
@@ -92,7 +100,46 @@ do
                             id
                         }
                     }
-                }' -f project=${project_id} -f issue="${issue_id}" --jq .data.addProjectV2ItemById.item.id > /dev/null
+                }' -f project="${issues_project_id}" -f issue="${issue_id}" --jq .data.addProjectV2ItemById.item.id > /dev/null
+        done
+    fi
+
+    echo "Looking for PRs in ${GH_ORG}/${repo}"
+        # TODO: paginate this query
+    prs_json="$(gh api graphql -f query='
+        query($org: String!, $repo: String!) {
+            repository(owner: $org, name: $repo) {
+                pullRequests(last: 100, labels: ["sig/Windows"], states: OPEN) {
+                    totalCount
+                    nodes {
+                        id
+                        number
+                        title
+                    }
+                }
+            }
+        }' -f org="${GH_ORG}" -f repo="${repo}")"
+
+    num_prs=$(jq ".data.repository.pullRequests.nodes | length" <<< "$prs_json")
+    echo "  found ${num_prs} in repo"
+
+    if [ "$num_prs" -gt 0 ]; then
+        range=$((num_prs - 1))
+        for i in $(seq 0 $range)
+        do
+            pr_id=$(jq ".data.repository.pullRequests.nodes[$i].id" <<< "$prs_json")
+            pr_title=$(jq ".data.repository.pullRequests.nodes[$i].title" <<< "$prs_json")
+            pr_number=$(jq ".data.repository.pullRequests.nodes[$i].number" <<< "$prs_json")
+            echo "    adding ${pr_number} - ${pr_title}"
+
+            gh api graphql -f query='
+                mutation($project:ID!, $pr:ID!) {
+                    addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                        item {
+                            id
+                        }
+                    }
+                }' -f project="${prs_project_id}" -f pr="${pr_id}" --jq .data.addProjectV2ItemById.item.id > /dev/null
         done
     fi
 done

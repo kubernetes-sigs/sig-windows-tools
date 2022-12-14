@@ -1,5 +1,7 @@
 # SIG Windows Tools
 
+[![test-kube-proxy-images](https://github.com/kubernetes-sigs/sig-windows-tools/actions/workflows/test-kube-proxy-images.yaml/badge.svg)](https://github.com/kubernetes-sigs/sig-windows-tools/actions/workflows/test-kube-proxy-images.yaml)
+
 Repository for tools and artifacts related to the sig-windows charter in Kubernetes.
 Scripts to assist kubeadm and wincat and flannel will be hosted here.
 

@@ -2,8 +2,9 @@
 
 You can use Kubernetes to run a mixture of Linux and Windows nodes, so you can mix Pods that run on Linux on with Pods that run on Windows. This is a guide on how to register Windows nodes to your cluster.
 
-## Warning	
-> The instructions and scripts in the directory DO NOT configure a CNI solution for Windows nodes running containerd.	
+## Warning
+
+> The instructions and scripts in the directory DO NOT configure a CNI solution for Windows nodes running containerd.
 There is a work-in-progress PR to assist in this at https://github.com/kubernetes-sigs/sig-windows-tools/pull/239
 
 ## Before you begin
@@ -14,15 +15,12 @@ Your Kubernetes server must be at or later than version 1.23 and your containerd
 
 - A Linux-based Kubernetes kubeadm cluster in which you have access to the control plane (see [Creating a single control-plane cluster with kubeadm](https://kubernetes-docsy-staging.netlify.app/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)).
 
-
 ## Objectives
 
 - Register a Windows node to the cluster
 - Configure networking so Pods and Services on Linux and Windows can communicate with each other
 
-
 ## Getting Started: Adding a Windows Node to Your Cluster
-
 
 ### Networking Configuration
 
@@ -170,10 +168,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-t
 >  **Note** To find your version of kubernetes run the following command:
 > `kubeadm version`
 
-
 ### Joining a Windows worker node
 
->  **Note:** All code snippets in Windows sections are to be run in a PowerShell environment with elevated permissions (Administrator) on the Windows worker node.
+> **Note:** All code snippets in Windows sections are to be run in a PowerShell environment with elevated permissions (Administrator) on the Windows worker node.
 
 1. Install ContainerD, kubelet, and kubeadm.
 
@@ -196,12 +193,11 @@ curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools
 
 Use the command that was given to you when you ran `kubeadm init` on a control plane host. If you no longer have this command, or the token has expired, you can run `kubeadm token create --print-join-command` (on a control plane host) to generate a new token and join command.
 
->  **Note:** Do not forget to add `--cri-socket "npipe:////./pipe/containerd-containerd" --v=5` at the end of the join command, if you use ContainerD
+> **Note:** Do not forget to add `--cri-socket "npipe:////./pipe/containerd-containerd" --v=5` at the end of the join command, if you use ContainerD
 
 3. Install kubectl for Windows (optional)
 
 For more information about it : https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
-
 
 #### Verifying your installation for flannel
 

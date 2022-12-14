@@ -26,7 +26,7 @@ dotnet run -- eventFlowConfig.json
 ```
 
 ## Publishing as single file
-Configured to produce a [single binary(https://docs.microsoft.com/en-us/dotnet/core/deploying/single-file#publish-a-single-file-app---cli)].  To build run:
+Configured to produce a [single binary](https://docs.microsoft.com/en-us/dotnet/core/deploying/single-file#publish-a-single-file-app---cli).  To build, run:
 
 ```
 dotnet publish -c Release -r win-x64

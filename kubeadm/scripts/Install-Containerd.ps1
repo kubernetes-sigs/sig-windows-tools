@@ -7,7 +7,6 @@ This script
 - Verifies that Windows Features requried for running contianers are enabled (and enables then if they are not)
 - Downloads ContainerD binaries from from at the version specified.
 - Downloads Windows SND CNI plugins.
-- Sets up a basic nat networking config for ContainerD to use until another CNI is configured
 - Registers ContainerD as a windows service.
 
 .PARAMETER ContainerDVersion
