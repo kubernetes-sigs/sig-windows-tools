@@ -2,7 +2,8 @@ $ErrorActionPreference = "Stop";
 
 # flannel uses host-local, flannel.exe, and sdnoverlay so copy that to the correct location
 Write-Output "Copying SDN CNI binaries to host"
-Copy-Item -Path "$env:CONTAINER_SANDBOX_MOUNT_POINT/cni/*" -Destination "c:\opt\cni\bin" -Force
+mkdir -force $env:CNI_BIN_PATH
+Copy-Item -Path "$env:CONTAINER_SANDBOX_MOUNT_POINT/cni/*" -Destination "$env:CNI_BIN_PATH" -Force
 
 Write-Host "copy flannel config"
 mkdir -force C:\etc\kube-flannel\
@@ -23,7 +24,8 @@ $managementIP = (Get-NetIPAddress -ifIndex $na[0].ifIndex -AddressFamily IPv4).I
 $cniJson.delegate.AdditionalArgs[0].Value.Settings.Exceptions = $serviceSubnet, $podSubnet
 $cniJson.delegate.AdditionalArgs[1].Value.Settings.DestinationPrefix = $serviceSubnet
 $cniJson.delegate.AdditionalArgs[2].Value.Settings.ProviderAddress = $managementIP
-Set-Content -Path c:/etc/cni/net.d/10-flannel.conf ($cniJson | ConvertTo-Json -depth 100)
+mkdir -force $env:CNI_CONFIG_PATH
+Set-Content -Path $env:CNI_CONFIG_PATH/10-flannel.conf ($cniJson | ConvertTo-Json -depth 100)
 
 # set route for metadata servers in clouds
 # https://github.com/kubernetes-sigs/sig-windows-tools/issues/36
