@@ -11,7 +11,7 @@ data:
   cni-conf-containerd.json: |
     {
       "name": "flannel.4096",
-      "cniVersion": "0.2.0",
+      "cniVersion": "0.3.1",
       "type": "flannel",
       "capabilities": {
         "portMappings": true,
@@ -99,7 +99,7 @@ spec:
         operator: Exists
       containers:
       - name: kube-flannel
-        image: sigwindowstools/flannel:v0.14.0-hostprocess
+        image: sigwindowstools/flannel:FLANNEL_VERSION-hostprocess
         imagePullPolicy: Always
         volumeMounts:
         - name: flannel-cfg
