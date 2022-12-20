@@ -81,17 +81,10 @@ $config = $config -replace "bin_dir = (.)*$", "bin_dir = `"c:/opt/cni/bin`""
 $config = $config -replace "conf_dir = (.)*$", "conf_dir = `"c:/etc/cni/net.d`""
 $config | Set-Content "$global:ConainterDPath\config.toml" -Force 
 
-mkdir -Force c:\opt\cni\bin | Out-Null
-mkdir -Force c:\etc\cni\net.d | Out-Null
-
-Write-Output "Getting SDN CNI binaries"
-DownloadFile "c:\opt\cni\cni-plugins.zip" https://github.com/microsoft/windows-container-networking/releases/download/v0.2.0/windows-container-networking-cni-amd64-v0.2.0.zip
-Expand-Archive -Path "c:\opt\cni\cni-plugins.zip" -DestinationPath "c:\opt\cni\bin" -Force
-
 Write-Output "Registering ContainerD as a service"
 containerd.exe --register-service
 
 Write-Output "Starting ContainerD service"
 Start-Service containerd
 
-Write-Output "Done - please remember to add '--cri-socket `"npipe:////./pipe/containerd-containerd`"' to your kubeadm join command"
+Write-Output "Done - please remember to add '--cri-socket `"npipe:////./pipe/containerd-containerd`"' to your kubeadm join command if your kubernetes version is below 1.25!"
