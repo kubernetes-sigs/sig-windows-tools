@@ -131,7 +131,7 @@ spec:
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: sigwindowstools/calico-install:VERSION-hostprocess
+          image: sigwindowstools/calico-install:CALICO_VERSION-hostprocess
           args: ["$env:CONTAINER_SANDBOX_MOUNT_POINT/calico/install.ps1"]
           imagePullPolicy: Always
           env:
@@ -173,7 +173,7 @@ spec:
               runAsUserName: "NT AUTHORITY\\system"
       containers:
       - name: calico-node-startup
-        image: sigwindowstools/calico-node:VERSION-hostprocess
+        image: sigwindowstools/calico-node:CALICO_VERSION-hostprocess
         args: ["$env:CONTAINER_SANDBOX_MOUNT_POINT/calico/node-service.ps1"]
         workingDir: "$env:CONTAINER_SANDBOX_MOUNT_POINT/calico/"
         imagePullPolicy: Always
