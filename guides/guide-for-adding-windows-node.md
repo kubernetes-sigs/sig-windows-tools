@@ -91,8 +91,7 @@ Now you can add Windows-compatible versions of Flannel and kube-proxy. In order 
 
 ```bash
 curl -L https://github.com/kubernetes-sigs/sig-windows-tools/releases/latest/download/kube-proxy.yml | sed 's/KUBE_PROXY_VERSION/v1.25.3/g' | kubectl apply -f -
-curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/flannel-overlay.yml | sed 's/FLANNEL_VERSION/v0.14.0/g' | kubectl apply -f -
-kubectl apply -f https://github.com/kubernetes-sigs/sig-windows-tools/releases/latest/download/flannel-overlay.yml
+curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/flannel-overlay.yml | sed 's/FLANNEL_VERSION/v0.17.0/g' | kubectl apply -f -
 ```
 
 >  **Note** If you are using another version of kubernetes on your Windows node, change v1.25.3 with your own version .
@@ -103,7 +102,7 @@ kubectl apply -f https://github.com/kubernetes-sigs/sig-windows-tools/releases/l
 Next you will need to apply the configuration that allows flannel to spawn pods and keep them running:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/kubeadm/flannel/kube-flannel-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/kube-flannel-rbac.yml
 ```
 
 
