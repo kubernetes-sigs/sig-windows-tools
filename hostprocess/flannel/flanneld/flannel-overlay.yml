@@ -111,6 +111,10 @@ spec:
         - name: kube-proxy
           mountPath: /flannel-config-file
         env:
+        - name: CNI_BIN_PATH
+          value: C:\\opt\\cni\\bin
+        - name: CNI_CONFIG_PATH
+          value: C:\\etc\\cni\\net.d
         - name: POD_NAME
           valueFrom:
             fieldRef:
