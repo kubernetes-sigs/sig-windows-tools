@@ -29,6 +29,8 @@ spec:
         # https://github.com/kubernetes/kubernetes/blob/b0bc8adbc2178e15872f9ef040355c51c45d04bb/pkg/proxy/winkernel/proxier.go#L155-L158
         - name: KUBE_NETWORK
           value: "flannel.4096"
+        - name: CNI_BIN_PATH
+          value: C:\\opt\\cni\\bin
         - name: NODE_NAME
           valueFrom:
             fieldRef:
