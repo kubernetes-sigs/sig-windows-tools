@@ -3,11 +3,6 @@
 
 You can use Kubernetes to run a mixture of Linux and Windows nodes, so you can mix Pods that run on Linux on with Pods that run on Windows. This is a guide on how to register Windows nodes to your cluster.
 
-## Warning
-
-> The instructions and scripts in the directory DO NOT configure a CNI solution for Windows nodes running containerd.
-There is a work-in-progress PR to assist in this at https://github.com/kubernetes-sigs/sig-windows-tools/pull/239
-
 ## Before you begin
 
 Your Kubernetes server must be at or later than version 1.22. To check the version, enter `kubectl version`.
@@ -168,11 +163,11 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-t
 
 ```PowerShell
 # Install ContainerD
-curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/kubeadm/scripts/Install-Containerd.ps1
+curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/Install-Containerd.ps1
 .\Install-Containerd.ps1
 
 # Install kubelet and kubeadm
-curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/kubeadm/scripts/PrepareNode.ps1
+curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/PrepareNode.ps1
 .\PrepareNode.ps1 -KubernetesVersion v1.25.3
 ```
 
