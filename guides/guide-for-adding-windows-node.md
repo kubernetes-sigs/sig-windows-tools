@@ -5,7 +5,7 @@ You can use Kubernetes to run a mixture of Linux and Windows nodes, so you can m
 
 ## Before you begin
 
-Your Kubernetes server must be at or later than version 1.23. To check the version, enter `kubectl version`.
+Your Kubernetes cluster must be at or later than version 1.23. To check the version, enter `kubectl version`.
 
 - Obtain a [Windows Server 2019 license](https://www.microsoft.com/en-us/cloud-platform/windows-server-pricing) (or higher) in order to configure the Windows node that hosts Windows containers. If you are using VXLAN/Overlay networking you must have also have [KB4489899](https://support.microsoft.com/help/4489899) installed.
 
@@ -50,7 +50,7 @@ For more information about it : https://kubernetes.io/docs/tasks/tools/install-k
 
 Once you have a Linux-based Kubernetes control-plane node and a Windows node you are ready to choose a networking solution.
 
-You have two choices:
+This guide offers two choices:
 
 - [Flannel](flannel.md)
 - [Calico](calico.md)

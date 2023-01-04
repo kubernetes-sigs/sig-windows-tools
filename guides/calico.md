@@ -2,7 +2,7 @@
 
 This should be followed after adding your [Windows node to the cluster with kubeadm](guide-for-adding-windows-node.md#adding-windows-nodes).
 
-## Configuring Calico with Host Process containers
+## Configuring Calico with HostProcess containers
 
 >  **Note:** All code snippets in Linux sections are to be run in a Linux environment on the Linux worker node.
 

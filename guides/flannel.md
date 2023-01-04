@@ -2,7 +2,7 @@
 
 This should be followed after adding your [Windows node to the cluster with kubeadm](guide-for-adding-windows-node.md#adding-windows-nodes).
 
-## Configuring Flannel with Host Process containers
+## Configuring Flannel with HostProcess containers
 
 ### Prepare Control Plane for Flannel
 
