@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 The Kubnernetes Authoers
+Copyright © 2021 The Kubernetes Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Download the resources specified in your config file ready to be served by the burrito",
 	Long: `
-	Read the specified config file and download the resources into the files 
+	Read the specified config file and download the resources into the files
 	sub directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}

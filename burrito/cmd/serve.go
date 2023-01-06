@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 The Kubnernetes Authoers
+Copyright © 2021 The Kubernetes Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 )
@@ -42,10 +42,10 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve a URL Endpoint hosting the downloadable files",
 	Long: `
-	Read the configuration file and serve the files, the files will be served. 
+	Read the configuration file and serve the files, the files will be served.
 	under {fsDir}/{componentName}/{resource} For example:
 	"containerd_url": "http://localhost:3000/files/containerd/containerd-1.5.2-windows-amd64.tar.gz"
-	
+
 	Flags:
 	--build, -b	Build the file directory at runtime, like calling build before serve
 
