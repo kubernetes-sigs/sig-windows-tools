@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 The Kubnernetes Authoers
+Copyright © 2021 The Kubernetes Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ var printCmd = &cobra.Command{
 	Use:   "print",
 	Short: "Print the image-builder configuration variables",
 	Long: `
-	Read the configuration file and print the image-builder 
+	Read the configuration file and print the image-builder
 	variables that will be used by image builder. For example:
 
 	Using config file: examples/burrito.yaml
