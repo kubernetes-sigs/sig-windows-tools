@@ -1,4 +1,4 @@
-ARG BUILDER_IMAGE=golang:1.16
+ARG BUILDER_IMAGE=golang:1.19
 ARG RUN_IMAGE=ubuntu:latest
 
 FROM ${BUILDER_IMAGE} as builder
