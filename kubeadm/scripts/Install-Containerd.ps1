@@ -68,18 +68,18 @@ if (-not (ValidateWindowsFeatures)) {
 }
 
 Write-Output "Getting ContainerD binaries"
-$global:ConainterDPath = "$env:ProgramFiles\containerd"
-mkdir -Force $global:ConainterDPath | Out-Null
-DownloadFile "$global:ConainterDPath\containerd.tar.gz" https://github.com/containerd/containerd/releases/download/v${ContainerDVersion}/containerd-${ContainerDVersion}-windows-amd64.tar.gz
-tar.exe -xvf "$global:ConainterDPath\containerd.tar.gz" --strip=1 -C $global:ConainterDPath
-$env:Path += ";$global:ConainterDPath"
+$global:ContainerDPath = "$env:ProgramFiles\containerd"
+mkdir -Force $global:ContainerDPath | Out-Null
+DownloadFile "$global:ContainerDPath\containerd.tar.gz" https://github.com/containerd/containerd/releases/download/v${ContainerDVersion}/containerd-${ContainerDVersion}-windows-amd64.tar.gz
+tar.exe -xvf "$global:ContainerDPath\containerd.tar.gz" --strip=1 -C $global:ContainerDPath
+$env:Path += ";$global:ContainerDPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
-containerd.exe config default | Out-File "$global:ConainterDPath\config.toml" -Encoding ascii
+containerd.exe config default | Out-File "$global:ContainerDPath\config.toml" -Encoding ascii
 #config file fixups
-$config = Get-Content "$global:ConainterDPath\config.toml"
+$config = Get-Content "$global:ContainerDPath\config.toml"
 $config = $config -replace "bin_dir = (.)*$", "bin_dir = `"c:/opt/cni/bin`""
 $config = $config -replace "conf_dir = (.)*$", "conf_dir = `"c:/etc/cni/net.d`""
-$config | Set-Content "$global:ConainterDPath\config.toml" -Force 
+$config | Set-Content "$global:ContainerDPath\config.toml" -Force 
 
 Write-Output "Registering ContainerD as a service"
 containerd.exe --register-service
