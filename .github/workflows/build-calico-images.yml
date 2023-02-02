@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Build Calico images
+
+on:
+  workflow_dispatch:
+    inputs:
+      calico_version:
+        description: 'Version of calico to build (ex: v3.25.0)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build and push images
+      run: |
+        echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        cd ./hostprocess/calico && ./build.sh -n ${{ github.event.inputs.calico_version }}
