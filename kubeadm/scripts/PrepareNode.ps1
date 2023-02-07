@@ -89,7 +89,7 @@ if ([Environment]::Is64BitOperatingSystem) {
 
 mkdir -Force $global:NssmInstallDirectory
 DownloadFile nssm.zip https://k8stestinfrabinaries.blob.core.windows.net/nssm-mirror/nssm-2.24.zip
-tar C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
+tar -C $global:NssmInstallDirectory -xvf .\nssm.zip --strip-components 2 */$arch/*.exe
 Remove-Item -Force .\nssm.zip
 
 $env:path += ";$global:NssmInstallDirectory"
