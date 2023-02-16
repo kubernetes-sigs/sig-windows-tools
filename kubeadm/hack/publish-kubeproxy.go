@@ -44,7 +44,7 @@ func main() {
 		log.Fatalf("err parsing %s: %v", supportedVersions, err)
 	}
 
-	repo, err := name.NewRepository("k8s.gcr.io/kube-proxy")
+	repo, err := name.NewRepository("registry.k8s.io/kube-proxy")
 	if err != nil {
 		log.Fatalf("err parsing %v", err)
 	}
