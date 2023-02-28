@@ -61,7 +61,7 @@ if($KubeProxyVersion)
 }
 else 
 {
-    $versions = (curl -L k8s.gcr.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
+    $versions = (curl -L registry.k8s.io/v2/kube-proxy/tags/list | ConvertFrom-Json).tags
 }
 
 foreach($version in $versions)
