@@ -26,19 +26,19 @@ trap 'docker buildx rm img-builder' EXIT
 if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
     trap 'docker buildx rm img-builder' EXIT
     pushd install
-    docker buildx build --provenance=false --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.install -t $repository/calico-install:$calicoVersion-hostprocess .
+    docker buildx build --provenance=false --sbom=false --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.install -t $repository/calico-install:$calicoVersion-hostprocess .
     popd
 fi
 
 if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
     pushd node
-    docker buildx build --provenance=false --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.node -t $repository/calico-node:$calicoVersion-hostprocess .
+    docker buildx build --provenance=false --sbom=false --platform windows/amd64 --output=type=registry --pull --build-arg=CALICO_VERSION=$calicoVersion -f Dockerfile.node -t $repository/calico-node:$calicoVersion-hostprocess .
     popd
 fi
 
 if [[ -n "$proxyVersion" || "$all" == "1" ]] ; then
     proxyVersion=${proxyVersion:-"v1.22.4"}
     pushd kube-proxy
-    docker buildx build --provenance=false --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-calico-hostprocess .
+    docker buildx build --provenance=false --sbom=false --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-calico-hostprocess .
     popd
 fi
