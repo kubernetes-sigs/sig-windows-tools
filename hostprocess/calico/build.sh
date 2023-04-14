@@ -18,7 +18,7 @@ esac; shift; done
 if [[ "$1" == '--' ]]; then shift; fi
 
 repository=${repository:-"sigwindowstools"}
-calicoVersion=${calicoVersion:-"v3.20.0"}
+calicoVersion=${calicoVersion:-"v3.25.0"}
 
 docker buildx create --name img-builder --use --platform windows/amd64
 trap 'docker buildx rm img-builder' EXIT
@@ -37,7 +37,7 @@ if [[ -n "$calicoVersion" || "$all" == "1" ]] ; then
 fi
 
 if [[ -n "$proxyVersion" || "$all" == "1" ]] ; then
-    proxyVersion=${proxyVersion:-"v1.22.4"}
+    proxyVersion=${proxyVersion:-"v1.27.1"}
     pushd kube-proxy
     docker buildx build --provenance=false --sbom=false --platform windows/amd64 --output=type=registry --pull --build-arg=k8sVersion=$proxyVersion -f Dockerfile -t $repository/kube-proxy:$proxyVersion-calico-hostprocess .
     popd
