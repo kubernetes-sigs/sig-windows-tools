@@ -103,11 +103,11 @@ spec:
         imagePullPolicy: Always
         volumeMounts:
         - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
+          mountPath: /mounts/kube-flannel/
         - name: flannel-windows-cfg
-          mountPath: /etc/kube-flannel-windows/
+          mountPath: /mounts/kube-flannel-windows/
         - name: kubeadm-config
-          mountPath: /etc/kubeadm-config/
+          mountPath: /mounts/kubeadm-config/
         - name: kube-proxy
           mountPath: /flannel-config-file
         env:
