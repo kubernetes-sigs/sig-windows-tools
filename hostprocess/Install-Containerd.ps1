@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-Installs ContainerD on a Windows machines in preperation for joining the node to a Kubernetes cluster.
+Installs ContainerD on a Windows machines in preparation for joining the node to a Kubernetes cluster.
 
 .DESCRIPTION
 This script
-- Verifies that Windows Features requried for running contianers are enabled (and enables then if they are not)
-- Downloads ContainerD binaries from from at the version specified.
+- Verifies that Windows Features requried for running containers are enabled (and enables them if they are not)
+- Downloads ContainerD binaries for the version specified.
 - Downloads Windows SND CNI plugins.
 - Registers ContainerD as a windows service.
 
