@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Build Calico Kube-Proxy images
+
+on:
+  workflow_dispatch:
+    inputs:
+      proxy_version:
+        description: 'Version of kube-proxy to build (ex: v1.27.1)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build and push images
+      run: |
+        echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        cd ./hostprocess/calico && ./build.sh -p ${{ github.event.inputs.proxy_version }}
