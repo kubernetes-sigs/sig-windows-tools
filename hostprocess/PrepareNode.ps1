@@ -105,24 +105,32 @@ nssm set kubelet DependOnService containerd
 
 New-NetFirewallRule -Name kubelet -DisplayName 'kubelet' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 10250
 
+$repoUrl='https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master'
+
 Write-Output "Please remember that after you have joined the node to the cluster, that you have to apply the cni daemonset/service and the kube-proxy"
 Write-Output "Also remember that for kube-proxy you have to change the its version from the name of the image in the kube-proxy.yml to that of your kubernetes version `n"
 # rancher commands
 Write-Output "In case you use rancher, use the following commands:"
 Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`") -Replace 'VERSION', '$KubernetesVersion' | Set-Content `"$(git rev-parse --show-toplevel)/kubeadm/kube-proxy/kube-proxy.yml`" `n"
+Write-Output "curl.exe -LO $repoUrl/kubeadm/kube-proxy/kube-proxy.yml"
+Write-Output "(Get-Content `"kube-proxy.yml`") -Replace 'VERSION', '$KubernetesVersion' | Set-Content `"kube-proxy.yml`" `n"
 Write-Output "For Linux, you can use the following command: "
-Write-Output "sed -i 's/VERSION/$KubernetesVersion/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep kubeadm)`n"
+Write-Output "curl -LO $repoUrl/kubeadm/kube-proxy/kube-proxy.yml"
+Write-Output "sed -i 's/VERSION/$KubernetesVersion/g' `kube-proxy.yml`n"
 # flannel commands
 Write-Output "In case you use flannel, use the following commands:"
 Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/flannel/kube-proxy/kube-proxy.yml`" `n"
+Write-Output "curl.exe -LO $repoUrl/hostprocess/flannel/kube-proxy/kube-proxy.yml"
+Write-Output "(Get-Content `"kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"kube-proxy.yml`" `n"
 Write-Output "For Linux, you can use the following command: "
-Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep flannel)`n"
+Write-Output "curl -LO $repoUrl/hostprocess/flannel/kube-proxy/kube-proxy.yml"
+Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `kube-proxy.yml`n"
 # calico commands
 Write-Output "In case you use calico, use the following commands:"
 Write-Output "For Windows you can use the following command: "
-Write-Output "(Get-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"$(git rev-parse --show-toplevel)/hostprocess/calico/kube-proxy/kube-proxy.yml`" `n"
+Write-Output "curl.exe -LO $repoUrl/hostprocess/calico/kube-proxy/kube-proxy.yml"
+Write-Output "(Get-Content `"kube-proxy.yml`") -Replace 'image: (.*):(.*)-(.*)-(.*)$', 'image: `$1:$KubernetesVersion-`$3-`$4' | Set-Content `"kube-proxy.yml`" `n"
 Write-Output "For Linux, you can use the following command: "
 # - image: sigwindowstools/kube-proxy:v1.24.2-flannel-hostprocess
-Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `$(find `$(git rev-parse --show-toplevel) -iname 'kube-proxy.yml' | grep calico)`n"
+Write-Output "curl -LO $repoUrl/hostprocess/calico/kube-proxy/kube-proxy.yml"
+Write-Output "sed -i -E 's/image: (.*):(.*)-(.*)-(.*)$/image: \1:$KubernetesVersion-\3-\4/g' `kube-proxy.yml`n"
