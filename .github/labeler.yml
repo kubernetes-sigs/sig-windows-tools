@@ -1,6 +1,0 @@
-# Add 'tide/merge-method-squash' to ALL pull requestsL
-# https://github.com/actions/labeler/issues/28#issuecomment-552362351
-tide/merge-method-squash:
-  - '**'      # all files
-  - '.*'      # all dot files
-  - '.*/**'   # all dot folders
