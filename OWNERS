@@ -1,7 +1,9 @@
 # See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
+  - aravindhp
   - jsturtevant
-  - ddebroy
-  - marosset
   - jayunit100
+  - marosset
+labels:
+  - tide/merge-method-squash
