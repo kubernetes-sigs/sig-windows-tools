@@ -94,12 +94,10 @@ curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/mast
 > `kubeadm version`
 
 5. Apply kube-flannel-rbac.yml from sig-windows-tools/kubeadm/flannel
-
-Modify the `net-conf.json` section of the flannel manifest in order to set the VNI to 4096 and the Port to 4789 here as well.
 Next you will need to apply the configuration that allows flannel to spawn pods and keep them running:
 
 ```bash
-curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/kube-flannel-rbac.yml | sed s'/"Type": "vxlan"/"Type": "vxlan", "VNI": 4096, "Port": 4789/' | kubectl apply -f -
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/kube-flannel-rbac.yml
 ```
 
 
