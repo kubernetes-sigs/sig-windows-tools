@@ -11,7 +11,7 @@ data:
   cni-conf-containerd.json: |
     {
       "name": "flannel.4096",
-      "cniVersion": "0.2.0",
+      "cniVersion": "0.3.0",
       "type": "flannel",
       "capabilities": {
         "portMappings": true,
