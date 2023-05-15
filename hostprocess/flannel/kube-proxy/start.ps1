@@ -11,7 +11,7 @@ function GetSourceVip($NetworkName)
 
         if (Test-Path $sourceVipJson) {
                 $sourceVipJSONData = Get-Content $sourceVipJson | ConvertFrom-Json
-                $vip = $sourceVipJSONData.ip4.ip.Split("/")[0]
+                $vip = $sourceVipJSONData.ips[0].address.Split("/")[0]
                 return $vip
         }
 
@@ -19,7 +19,7 @@ function GetSourceVip($NetworkName)
         $subnet = $hnsNetwork.Subnets[0].AddressPrefix
 
         $ipamConfig = @"
-        {"cniVersion": "0.2.0", "name": "$NetworkName", "ipam":{"type":"host-local","ranges":[[{"subnet":"$subnet"}]],"dataDir":"/var/lib/cni/networks"}}
+        {"cniVersion": "0.3.0", "name": "$NetworkName", "ipam":{"type":"host-local","ranges":[[{"subnet":"$subnet"}]],"dataDir":"/var/lib/cni/networks"}}
 "@
 
         Write-Host "ipam sourcevip request: $ipamConfig"
@@ -41,7 +41,7 @@ function GetSourceVip($NetworkName)
         Remove-Item env:CNI_PATH
 
         $sourceVipJSONData = Get-Content $sourceVipJson | ConvertFrom-Json
-        $vip = $sourceVipJSONData.ip4.ip.Split("/")[0]
+        $vip = $sourceVipJSONData.ips[0].address.Split("/")[0]
         return $vip
 }
 
