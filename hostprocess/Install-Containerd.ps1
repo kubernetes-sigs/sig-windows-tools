@@ -15,16 +15,22 @@ ContainerD version to download and use.
 .PARAMETER netAdapterName
 Name of network adapter to use when configuring basic nat network.
 
+.PARAMETER skipHypervisorSupportCheck
+Skip the CPU check for Hypervisor support. You way wont be able to host Hyper-V isolated containers.
+Check https://github.com/kubernetes-sigs/sig-windows-tools/issues/296#issuecomment-1511695392 for more information.
+
 .EXAMPLE
-PS> .\Install-Conatinerd.ps1
+PS> .\Install-Conatinerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck
 
 #>
 
 Param(
     [parameter(HelpMessage = "ContainerD version to use")]
-    [string] $ContainerDVersion = "1.6.8",
+    [string] $ContainerDVersion = "1.7.1",
     [parameter(HelpMessage = "Name of network adapter to use when configuring basic nat network")]
-    [string] $netAdapterName = "Ethernet"
+    [string] $netAdapterName = "Ethernet",
+    [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
+    [switch] $skipHypervisorSupportCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -39,30 +45,56 @@ function DownloadFile($destination, $source) {
     }
 }
 
-$requiredWindowsFeatures = @(
-    "Containers",
-    "Hyper-V",
-    "Hyper-V-PowerShell")
+$rebootNeeded = $false
 
-function ValidateWindowsFeatures {
-    $allFeaturesInstalled = $true
-    foreach ($feature in $requiredWindowsFeatures) {
-        $f = Get-WindowsFeature -Name $feature
-        if (-not $f.Installed) {
-            Write-Warning "Windows feature: '$feature' is not installed."
-            $allFeaturesInstalled = $false
-        }
-    }
-    return $allFeaturesInstalled
+$windowsFeatures = @("Containers")
+
+if (!$skipHypervisorSupportCheck) {
+    $windowsFeatures += @("Hyper-V", "Hyper-V-PowerShell")
 }
 
-if (-not (ValidateWindowsFeatures)) {
-    Write-Output "Installing required windows features..."
+foreach ($feature in $windowsFeatures) {
+    $featureInstalled = (Get-WindowsFeature -Name $feature).Installed
 
-    foreach ($feature in $requiredWindowsFeatures) {
+    if ($featureInstalled) {
+        Write-Output "Windows feature '$feature' is already installed."
+    }
+    else {
+        Write-Warning "Windows feature '$feature' is not installed. Installing it now..."
         Install-WindowsFeature -Name $feature
+        $rebootNeeded = $true
+    }
+}
+
+if ($skipHypervisorSupportCheck) {
+    $hyperVFeatureName = "Microsoft-Hyper-V"
+    $hyperVState = (Get-WindowsOptionalFeature -FeatureName $hyperVFeatureName -Online).State
+
+    if ($hyperVState -eq "Enabled") {
+        Write-Output "Windows optional feature '$hyperVFeatureName' is already enabled."
+    }
+    else {
+        Write-Warning "Windows optional feature '$hyperVFeatureName' is not enabled. Enabling it now..."
+        DISM /Online /Enable-Feature /FeatureName:$hyperVFeatureName /All /NoRestart
+        $rebootNeeded = $true
     }
 
+    $hyperVOnlineFeatureName = "Microsoft-Hyper-V-Online"
+    $hyperVOnlineState = (Get-WindowsOptionalFeature -FeatureName $hyperVOnlineFeatureName -Online).State
+
+    if ($hyperVOnlineState -eq "Disabled") {
+        Write-Output "Windows optional feature '$hyperVOnlineFeatureName' is already disabled."
+    }
+    else {
+        Write-Warning "Windows optional feature '$hyperVOnlineFeatureName' is not disabled. Disabling it now..."
+        DISM /Online /Disable-Feature /FeatureName:$hyperVOnlineFeatureName /NoRestart
+        $rebootNeeded = $true
+    }
+
+    Write-Warning "The Hyper-V features was installed without checking the CPU for Hypervisor support. You may not be able to host Hyper-V isolated containers if CPU doesn't support hypervisors."
+}
+
+if ($rebootNeeded) {
     Write-Output "Please reboot and re-run this script."
     exit 0
 }
