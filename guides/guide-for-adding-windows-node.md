@@ -159,21 +159,30 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-t
 
 > **Note:** All code snippets in Windows sections are to be run in a PowerShell environment with elevated permissions (Administrator) on the Windows worker node.
 
-1. Install ContainerD, wins, kubelet, and kubeadm.
+1. Install ContainerD.
 
 ```PowerShell
 # Install ContainerD
 curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/Install-Containerd.ps1
-.\Install-Containerd.ps1
+.\Install-Containerd.ps1 -ContainerDVersion 1.7.1 
+```
 
+> **Note** Adjust the parameters for `Install-Containerd.ps1` as you need them.
+
+> **Note** Set `skipHypervisorSupportCheck` if your machine does not support Hyper-V. You way wont be able to host Hyper-V isolated containers.  
+Example: `.\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck`
+
+2. Install kubelet and kubeadm.
+
+```PowerShell
 # Install kubelet and kubeadm
 curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/PrepareNode.ps1
 .\PrepareNode.ps1 -KubernetesVersion v1.25.3
 ```
 
-> **Note** If you want to install another version of kubernetes, modify v1.24.3 with the version you want to install
+> **Note** If you want to install another version of kubernetes, modify v1.25.3 with the version you want to install
 
-2. Run `kubeadm` to join the node
+3. Run `kubeadm` to join the node
 
 > **Note** Before joining the node, copy the file from /run/flannel/subnet.env to your windows machine to C:\run\flannel\subnet.env
 > You will need to create the folders for it
@@ -182,7 +191,7 @@ Use the command that was given to you when you ran `kubeadm init` on a control p
 
 > **Note:** Do not forget to add `--cri-socket "npipe:////./pipe/containerd-containerd" --v=5` at the end of the join command, if you use ContainerD
 
-3. Install kubectl for windows (optional)
+4. Install kubectl for windows (optional)
 
 For more information about it : https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
 
