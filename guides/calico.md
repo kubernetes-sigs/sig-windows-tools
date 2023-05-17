@@ -61,6 +61,8 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-t
 >  **Note** To find your version of kubernetes run the following command:
 > `kubeadm version`
 
+The `$CALICO_VERSION` version in the above code section refers to the image of <a href="https://hub.docker.com/r/sigwindowstools/calico-node/tags" target="_blank">sigwindowstools/calico-node</a>, not the official version of Calico. Suggest modifying after querying rather than directly applying the `$CALICO_VERSION` value. `KUBE_PROXY_VERSION`-like modification method。
+
 ## Verifying your installation for Calico
 >  **Note:** Remember to check if you have the calico cni installed on your Windows node ("C:\Program Files\containerd\cni\"). If you do not have it, follow this tutorial to install it: https://projectcalico.docs.tigera.io/getting-started/windows-calico/kubernetes/standard#install-calico-and-kubernetes-on-windows-nodes
 If you have trouble with modifying config.ps1, use this https://github.com/kubernetes-sigs/sig-windows-dev-tools/blob/master/forked/config.ps1
