@@ -18,7 +18,7 @@ if (test-path env:KUBEPROXY_PATH){
     # used for CI flows
     $kproxy = $env:KUBEPROXY_PATH
 }else {
-    $kproxy = "$env:CONTAINER_SANDBOX_MOUNT_POINT/kube-proxy/kube-proxy.exe"
+    $kproxy = "$env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kube-proxy/kube-proxy.exe"
 }
 ipmo -Force .\hns.psm1
 
@@ -46,22 +46,11 @@ if ($kubeProxyVer -match "v([0-9])\.([0-9]+)") {
 # requires 2019 with KB4580390 (Oct 2020)
 $PlatformSupportDSR = $true
 
-# This is a workaround since the go-client doesn't know about the path $env:CONTAINER_SANDBOX_MOUNT_POINT
-# go-client is going to be address in a future release:
-#   https://github.com/kubernetes/kubernetes/pull/104490
-# We could address this in kubeamd as well: 
-#   https://github.com/kubernetes/kubernetes/blob/9f0f14952c51e7a5622eac05c541ba20b5821627/cmd/kubeadm/app/phases/addons/proxy/manifests.go
-Write-Host "Write files so the kubeconfig points to correct locations"
-mkdir -force /var/lib/kube-proxy/
-((Get-Content -path $env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf -Raw) -replace '/var',"$($env:CONTAINER_SANDBOX_MOUNT_POINT)/var") | Set-Content -Path $env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf
-cp $env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf /var/lib/kube-proxy/kubeconfig.conf
-
 # Build up the arguments for starting kube-proxy.
 $argList = @(`
     "--hostname-override=$env:NODENAME", `
     "--v=4",`
-    "--proxy-mode=kernelspace",`
-    "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig.conf"`
+    "--proxy-mode=kernelspace"`
 )
 $extraFeatures = @()
 

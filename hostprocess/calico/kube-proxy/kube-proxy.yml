@@ -37,7 +37,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         volumeMounts:
-        - mountPath: /var/lib/kube-proxy
+        - mountPath: /mounts/var/lib/kube-proxy
           name: kube-proxy
       nodeSelector:
         kubernetes.io/os: windows

@@ -1,7 +1,7 @@
 ARG BASE="mcr.microsoft.com/oss/kubernetes/windows-host-process-containers-base-image:v0.1.0"
 
 FROM --platform=linux/amd64 curlimages/curl as bins
-ARG CALICO_VERSION="v3.20.0"
+ARG CALICO_VERSION="v3.25.0"
 
 WORKDIR /cni
 RUN curl -Lo cni.zip https://github.com/projectcalico/calico/releases/download/${CALICO_VERSION}/calico-windows-${CALICO_VERSION}.zip
