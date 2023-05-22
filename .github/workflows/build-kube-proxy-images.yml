@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Build Calico Kube-Proxy images
+name: Build Kube-Proxy images
 
 on:
   workflow_dispatch:
@@ -16,4 +16,8 @@ jobs:
     - name: Build and push images
       run: |
         echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-        cd ./hostprocess/calico && ./build.sh -p ${{ github.event.inputs.proxy_version }}
+        pushd ./hostprocess/calico 
+        ./build.sh -p ${{ github.event.inputs.proxy_version }}
+        popd
+        pushd ./hostprocess/flannel
+        ./build.sh -p ${{ github.event.inputs.proxy_version}}
