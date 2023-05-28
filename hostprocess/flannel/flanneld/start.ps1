@@ -15,8 +15,8 @@ cp -force $env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kube-flannel/net-conf.json  
 # get info
 Write-Host "update cni config"
 $cniJson = get-content $env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kube-flannel-windows/cni-conf-containerd.json | ConvertFrom-Json
-$serviceSubnet = get-content $env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kubeadm-config/ClusterConfiguration | ForEach-Object -Process {if($_.Contains("serviceSubnet:")) {$_.Trim().Split()[1]}}
-$podSubnet = get-content $env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kubeadm-config/ClusterConfiguration | ForEach-Object -Process {if($_.Contains("podSubnet:")) {$_.Trim().Split()[1]}}
+$serviceSubnet = $env:SERVICE_SUBNET
+$podSubnet = (get-content $env:CONTAINER_SANDBOX_MOUNT_POINT/mounts/kube-flannel/net-conf.json | ConvertFrom-Json).Network
 $na = Get-NetRoute | Where { $_.DestinationPrefix -eq '0.0.0.0/0' } | Select-Object -Property ifIndex
 $managementIP = (Get-NetIPAddress -ifIndex $na[0].ifIndex -AddressFamily IPv4).IPAddress
 
@@ -32,13 +32,9 @@ Set-Content -Path $env:CNI_CONFIG_PATH/10-flannel.conf ($cniJson | ConvertTo-Jso
 Write-Host "add route"
 route /p add 169.254.169.254 mask 255.255.255.255 0.0.0.0
 
-write-host "copy sa info (should be able to do this with a change to go client"
-mkdir -force $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel-config-file/var/run/secrets/kubernetes.io/serviceaccount/
-cp -force $env:CONTAINER_SANDBOX_MOUNT_POINT/var/run/secrets/kubernetes.io/serviceaccount/* $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel-config-file/var/run/secrets/kubernetes.io/serviceaccount/
-
 Write-Host "envs"
 write-host $env:POD_NAME
 write-host $env:POD_NAMESPACE
 
 Write-Host "Starting flannel"
-& $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel/flanneld.exe --kube-subnet-mgr --kubeconfig-file $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel-config-file/kubeconfig.conf --iface $managementIP
+& $env:CONTAINER_SANDBOX_MOUNT_POINT/flannel/flanneld.exe --kube-subnet-mgr --iface $managementIP

@@ -59,17 +59,32 @@ The output should include the Linux flannel DaemonSet as running:
 ```
 NAMESPACE NAME READY STATUS RESTARTS AGE
 ...
-kube-system kube-flannel-ds-54954 1/1 Running 0 1m
+kube-flannel kube-flannel-ds-sfqkv 1/1 Running 0 1m
 ```
 
 ### Add Windows flannel solution
 
-1. Add Windows Flannel and kube-proxy DaemonSets
-
-Now you can add Windows-compatible versions of Flannel and kube-proxy. In order to ensure that you get a compatible version of kube-proxy, you'll need to substitute the tag of the image. The following example shows usage for Kubernetes v1.27.1, but you should adjust the version for your own deployment.
+Now you can add a Windows-compatible version of Flannel.
 
 ```bash
-curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/flannel-overlay.yml | sed 's/FLANNEL_VERSION/v0.21.5/g' | kubectl apply -f -
+controlPlaneEndpoint=$(kubectl get configmap -n kube-system kube-proxy -o jsonpath="{.data['kubeconfig\.conf']}" | grep server: | sed 's/.*\:\/\///g')
+kubernetesServiceHost=$(echo $controlPlaneEndpoint | cut -d ":" -f 1)
+kubernetesServicePort=$(echo $controlPlaneEndpoint | cut -d ":" -f 2)
+curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/flannel-overlay.yml | sed 's/FLANNEL_VERSION/v0.21.5/g' | sed "s/KUBERNETES_SERVICE_HOST_VALUE/$kubernetesServiceHost/g" | sed "s/KUBERNETES_SERVICE_PORT_VALUE/$kubernetesServicePort/g" | kubectl apply -f -
+```
+
+>  **Note** If your cluster uses a different service subnet than `10.96.0.0/12` then you need to adjust the environment variable `SERVICE_SUBNET` before applying it.
+> To find your service subnet run the following command:  
+> `kubectl get configmap -n kube-system kubeadm-config -o yaml | grep serviceSubnet`
+
+>  **Note** If you changed the`$CNIBinPath` or `$CNIConfigPath` optional parameters when running `Install-Containerd.ps1`,
+>  you will need to use those paths. Pipe it through
+>  `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g' | sed 's/C:\\\\etc\\\\cni\\\\net.d/<your cni config path>/g'`
+>  before feeding it to `kubectl apply -f -`.
+
+Next add a Windows-compatible version of kube-proxy. In order to ensure that you get a compatible version of kube-proxy, you'll need to substitute the tag of the image. The following example shows usage for Kubernetes v1.27.1, but you should adjust the version for your own deployment.
+
+```bash
 curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/kube-proxy/kube-proxy.yml | sed 's/KUBE_PROXY_VERSION/v1.27.1/g' | kubectl apply -f -
 ```
 
@@ -77,21 +92,9 @@ curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/mast
 > To find your version of kubernetes run the following command:
 > `kubeadm version`
 
->  **Note** If you changed the`$CNIBinPath` or `$CNIConfigPath` optional parameters when running `Install-Containerd.ps1`,
->  you will need to use those paths on `flannel-overlay.yml`. Pipe it through
->  `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g' | sed 's/C:\\\\etc\\\\cni\\\\net.d/<your cni config path>/g'`
->  before feeding it to `kubectl apply -f -`.
-
 >  **Note** If you changed the`$CNIBinPath` optional parameter when running `Install-Containerd.ps1`, you will need to
->  use that path on `kube-proxy.yml`. Pipe it through `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g'` before
+>  use that path. Pipe it through `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g'` before
 >  feeding it to `kubectl apply -f -`.
-
-2. Apply kube-flannel-rbac.yml from sig-windows-tools/kubeadm/flannel
-Next you will need to apply the configuration that allows flannel to spawn pods and keep them running:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/flannel/flanneld/kube-flannel-rbac.yml
-```
 
 ## Verifying your installation for Flannel
 
@@ -101,10 +104,10 @@ You should now be able to view the Windows node in your cluster by running:
 kubectl get nodes -o wide
 ```
 
-If your new node is in the `NotReady` state it is likely because the flannel image is still downloading. You can check the progress as before by checking on the flannel pods in the `kube-system` namespace:
+If your new node is in the `NotReady` state it is likely because the flannel image is still downloading. You can check the progress as before by checking on the flannel pods in the `kube-flannel` namespace:
 
 ```shell
-kubectl -n kube-system get pods -l app=flannel
+kubectl -n kube-flannel get pods -l app=flannel
 ```
 
 Once the flannel Pod is running, your node should enter the `Ready` state and then be available to handle workloads.

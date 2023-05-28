@@ -3,7 +3,7 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: kube-flannel-windows-cfg
-  namespace: kube-system
+  namespace: kube-flannel
   labels:
     tier: node
     app: flannel
@@ -59,7 +59,7 @@ metadata:
   labels:
     tier: node
     app: flannel
-  namespace: kube-system
+  namespace: kube-flannel
 spec:
   selector:
     matchLabels:
@@ -106,15 +106,23 @@ spec:
           mountPath: /mounts/kube-flannel/
         - name: flannel-windows-cfg
           mountPath: /mounts/kube-flannel-windows/
-        - name: kubeadm-config
-          mountPath: /mounts/kubeadm-config/
-        - name: kube-proxy
-          mountPath: /flannel-config-file
         env:
         - name: CNI_BIN_PATH
           value: C:\\opt\\cni\\bin
         - name: CNI_CONFIG_PATH
           value: C:\\etc\\cni\\net.d
+        - name: SERVICE_SUBNET
+          value: 10.96.0.0/12
+          # As of now with the currently used flannel version (last checked with v0.21.5) we need to overwrite KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT
+          # in order to be able to reach the kubernetes api server. Under windows it's currently not possible to reach it over the service created by kubernetes
+          # For more context and details check the corresponding PR: https://github.com/kubernetes-sigs/sig-windows-tools/pull/314
+          # Especially the comments in this review: https://github.com/kubernetes-sigs/sig-windows-tools/pull/314#discussion_r1238815189
+          # There is also a follow up issue on the flannel side: https://github.com/flannel-io/flannel/issues/1772
+          # Once this issue is solved we should be able to remove the custom host and port to the kubernetes api server
+        - name: KUBERNETES_SERVICE_HOST
+          value: KUBERNETES_SERVICE_HOST_VALUE
+        - name: KUBERNETES_SERVICE_PORT
+          value: "KUBERNETES_SERVICE_PORT_VALUE"
         - name: POD_NAME
           valueFrom:
             fieldRef:
@@ -126,15 +134,9 @@ spec:
               apiVersion: v1
               fieldPath: metadata.namespace
       volumes:
-      - name: kube-proxy
-        configMap:
-          name: kube-proxy
       - name: flannel-cfg
         configMap:
           name: kube-flannel-cfg
       - name: flannel-windows-cfg
         configMap:
           name: kube-flannel-windows-cfg
-      - name: kubeadm-config
-        configMap:
-          name: kubeadm-config
