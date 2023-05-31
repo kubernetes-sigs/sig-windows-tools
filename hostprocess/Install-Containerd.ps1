@@ -19,8 +19,14 @@ Name of network adapter to use when configuring basic nat network.
 Skip the CPU check for Hypervisor support. You way wont be able to host Hyper-V isolated containers.
 Check https://github.com/kubernetes-sigs/sig-windows-tools/issues/296#issuecomment-1511695392 for more information.
 
+.PARAMETER CNIBinPath
+Path to configure ContainerD to look for CNI binaries.
+
+.PARAMETER CNIConfigPath
+Path to configure ContainerD to look for CNI config files.
+
 .EXAMPLE
-PS> .\Install-Conatinerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck
+PS> .\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck -CNIBinPath "c:/opt/cni/bin" -CNIConfigPath "c:/etc/cni/net.d"
 
 #>
 
@@ -31,6 +37,10 @@ Param(
     [string] $netAdapterName = "Ethernet",
     [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
     [switch] $skipHypervisorSupportCheck
+    [parameter(HelpMessage = "Path to configure ContainerD to look for CNI binaries")]
+    [string] $CNIBinPath = "c:/opt/cni/bin"
+    [parameter(HelpMessage = "Path to configure ContainerD to look for CNI config files")]
+    [string] $CNIConfigPath = "c:/etc/cni/net.d",
 )
 
 $ErrorActionPreference = 'Stop'
@@ -109,9 +119,12 @@ $env:Path += ";$global:ContainerDPath"
 containerd.exe config default | Out-File "$global:ContainerDPath\config.toml" -Encoding ascii
 #config file fixups
 $config = Get-Content "$global:ContainerDPath\config.toml"
-$config = $config -replace "bin_dir = (.)*$", "bin_dir = `"c:/opt/cni/bin`""
-$config = $config -replace "conf_dir = (.)*$", "conf_dir = `"c:/etc/cni/net.d`""
-$config | Set-Content "$global:ContainerDPath\config.toml" -Force 
+$config = $config -replace "bin_dir = (.)*$", "bin_dir = `"$CNIBinPath`""
+$config = $config -replace "conf_dir = (.)*$", "conf_dir = `"$CNIConfigPath`""
+$config | Set-Content "$global:ContainerDPath\config.toml" -Force
+
+mkdir -Force $CNIBinPath | Out-Null
+mkdir -Force $CNIConfigPath | Out-Null
 
 Write-Output "Registering ContainerD as a service"
 containerd.exe --register-service

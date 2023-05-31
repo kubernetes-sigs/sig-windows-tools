@@ -55,7 +55,8 @@ $env:Path += ";$global:KubernetesPath"
 DownloadFile $kubeletBinPath https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubelet.exe
 DownloadFile "$global:KubernetesPath\kubeadm.exe" https://dl.k8s.io/$KubernetesVersion/bin/windows/amd64/kubeadm.exe
 
-mkdir -force C:\var\log\kubelet
+$kubeletLogPath = "C:\var\log\kubelet"
+mkdir -force $kubeletLogPath
 mkdir -force C:\var\lib\kubelet\etc\kubernetes
 mkdir -force C:\etc\kubernetes\pki
 New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
@@ -100,6 +101,16 @@ $newPath = "$global:NssmInstallDirectory;" +
 
 Write-Host "Registering kubelet service"
 nssm install kubelet $global:Powershell $global:PowershellArgs $global:StartKubeletScript
+nssm set kubelet AppStdout $kubeletLogPath\kubelet.out.log
+nssm set kubelet AppStderr $kubeletLogPath\kubelet.err.log
+
+# Configure online file rotation.
+nssm set kubelet AppRotateFiles 1
+nssm set kubelet AppRotateOnline 1
+# Rotate once per day.
+nssm set kubelet AppRotateSeconds 86400
+# Rotate after 10MB.
+nssm set kubelet AppRotateBytes 10485760
 
 nssm set kubelet DependOnService containerd
 
