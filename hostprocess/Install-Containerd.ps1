@@ -36,7 +36,7 @@ Param(
     [parameter(HelpMessage = "Name of network adapter to use when configuring basic nat network")]
     [string] $netAdapterName = "Ethernet",
     [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
-    [switch] $skipHypervisorSupportCheck
+    [switch] $skipHypervisorSupportCheck,
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI binaries")]
     [string] $CNIBinPath = "c:/opt/cni/bin",
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI config files")]
