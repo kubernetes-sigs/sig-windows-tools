@@ -38,7 +38,7 @@ Param(
     [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
     [switch] $skipHypervisorSupportCheck
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI binaries")]
-    [string] $CNIBinPath = "c:/opt/cni/bin"
+    [string] $CNIBinPath = "c:/opt/cni/bin",
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI config files")]
     [string] $CNIConfigPath = "c:/etc/cni/net.d",
 )
