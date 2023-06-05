@@ -40,7 +40,7 @@ Param(
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI binaries")]
     [string] $CNIBinPath = "c:/opt/cni/bin",
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI config files")]
-    [string] $CNIConfigPath = "c:/etc/cni/net.d",
+    [string] $CNIConfigPath = "c:/etc/cni/net.d"
 )
 
 $ErrorActionPreference = 'Stop'
