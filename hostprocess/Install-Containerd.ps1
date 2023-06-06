@@ -27,6 +27,8 @@ PS> .\Install-Conatinerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -
 Param(
     [parameter(HelpMessage = "ContainerD version to use")]
     [string] $ContainerDVersion = "1.7.1",
+    [parameter(HelpMessage = "crictl version to use")]
+    [string] $crictlVersion = "1.27.0",
     [parameter(HelpMessage = "Name of network adapter to use when configuring basic nat network")]
     [string] $netAdapterName = "Ethernet",
     [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
@@ -118,5 +120,16 @@ containerd.exe --register-service
 
 Write-Output "Starting ContainerD service"
 Start-Service containerd
+
+# Install crictl from the cri-tools project which is required so that kubeadm can talk to the CRI endpoint.
+DownloadFile "$global:ContainerDPath\crictl.tar.gz" https://github.com/kubernetes-sigs/cri-tools/releases/download/v$crictlVersion/crictl-v$crictlVersion-windows-amd64.tar.gz
+tar.exe -xvf "$global:ContainerDPath\crictl.tar.gz" -C $global:ContainerDPath
+
+# Configure crictl
+mkdir -Force "$home\.crictl"
+@"
+runtime-endpoint: npipe://./pipe/containerd-containerd
+image-endpoint: npipe://./pipe/containerd-containerd
+"@ | Set-Content "$home\.crictl\crictl.yaml" -Force
 
 Write-Output "Done - please remember to add '--cri-socket `"npipe:////./pipe/containerd-containerd`"' to your kubeadm join command if your kubernetes version is below 1.25!"
