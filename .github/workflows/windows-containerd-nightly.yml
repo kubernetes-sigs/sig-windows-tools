@@ -11,14 +11,14 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
 
     - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.18.2
+        go-version: 1.20.4
     
     - name: Create drop folder
       run: mkdir -p $GITHUB_WORKSPACE/output/bin
