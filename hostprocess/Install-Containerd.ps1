@@ -20,10 +20,10 @@ Skip the CPU check for Hypervisor support. You way wont be able to host Hyper-V 
 Check https://github.com/kubernetes-sigs/sig-windows-tools/issues/296#issuecomment-1511695392 for more information.
 
 .PARAMETER CNIBinPath
-Path to configure ContainerD to look for CNI binaries.
+Path to configure ContainerD to look for CNI binaries. Optional, defaults to "c:/opt/cni/bin".
 
 .PARAMETER CNIConfigPath
-Path to configure ContainerD to look for CNI config files.
+Path to configure ContainerD to look for CNI config files. Optional, defaults to "c:/etc/cni/net.d".
 
 .EXAMPLE
 PS> .\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck -CNIBinPath "c:/opt/cni/bin" -CNIConfigPath "c:/etc/cni/net.d"

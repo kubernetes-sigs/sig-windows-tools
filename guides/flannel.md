@@ -77,6 +77,15 @@ curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/mast
 > To find your version of kubernetes run the following command:
 > `kubeadm version`
 
+>  **Note** If you changed the`$CNIBinPath` or `$CNIConfigPath` optional parameters when running `Install-Containerd.ps1`,
+>  you will need to use those paths on `flannel-overlay.yml`. Pipe it through
+>  `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g' | sed 's/C:\\\\etc\\\\cni\\\\net.d/<your cni config path>/g'`
+>  before feeding it to `kubectl apply -f -`.
+
+>  **Note** If you changed the`$CNIBinPath` optional parameter when running `Install-Containerd.ps1`, you will need to
+>  use that path on `kube-proxy.yml`. Pipe it through `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g'` before
+>  feeding it to `kubectl apply -f -`.
+
 2. Apply kube-flannel-rbac.yml from sig-windows-tools/kubeadm/flannel
 Next you will need to apply the configuration that allows flannel to spawn pods and keep them running:
 
