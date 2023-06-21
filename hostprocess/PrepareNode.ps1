@@ -11,6 +11,9 @@ This script assists with joining a Windows node to a cluster.
 .PARAMETER KubernetesVersion
 Kubernetes version to download and use
 
+.PARAMETER HostnameOverride
+Overrides the hostname for kubeadm. Defaults to the value determined by the hostname command.
+
 .EXAMPLE
 PS> .\PrepareNode.ps1 -KubernetesVersion v1.25.3
 
@@ -18,7 +21,9 @@ PS> .\PrepareNode.ps1 -KubernetesVersion v1.25.3
 
 Param(
     [parameter(Mandatory = $true, HelpMessage="Kubernetes version to use")]
-    [string] $KubernetesVersion
+    [string] $KubernetesVersion,
+    [parameter(HelpMessage="Hostname override for kubeadm")]
+    [string] $HostnameOverride = "$(hostname)"
 )
 $ErrorActionPreference = 'Stop'
 
@@ -64,7 +69,7 @@ New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C
 # dockershim related flags (--image-pull-progress-deadline=20m and --network-plugin=cni)  are removed in k8s v1.24
 # Link to changelog: https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.24.md
 
-$cmd_commands=@("C:\k\kubelet.exe ", '$global:KubeletArgs ', '--cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki ', "--config=/var/lib/kubelet/config.yaml ", "--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf ", "--kubeconfig=/etc/kubernetes/kubelet.conf ", '--hostname-override=$(hostname) ', '--pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:3.6`" ', "--enable-debugging-handlers ", "--cgroups-per-qos=false ", '--enforce-node-allocatable=`"`" ', '--resolv-conf=`"`" ')
+$cmd_commands=@("C:\k\kubelet.exe ", '$global:KubeletArgs ', '--cert-dir=$env:SYSTEMDRIVE\var\lib\kubelet\pki ', "--config=/var/lib/kubelet/config.yaml ", "--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf ", "--kubeconfig=/etc/kubernetes/kubelet.conf ", "--hostname-override=$HostnameOverride ", '--pod-infra-container-image=`"mcr.microsoft.com/oss/kubernetes/pause:3.6`" ', "--enable-debugging-handlers ", "--cgroups-per-qos=false ", '--enforce-node-allocatable=`"`" ', '--resolv-conf=`"`" ')
 [version]$CurrentVersion = $($KubernetesVersion.Split("v") | Select -Index 1)
 [version]$V1_24_Version = '1.24'
 if ($CurrentVersion -lt $V1_24_Version) {
