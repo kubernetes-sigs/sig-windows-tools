@@ -48,7 +48,7 @@ manifest_entries=""
 
 # Build container images with buildx
 for win_ver in "${win_vers[@]}"; do
-  docker buildx build --platform windows/amd64 --output=$output -f Dockerfile.windows --build-arg=WINDOWS_VERSION=$win_ver -t ${repository}/csi-proxy:${version}-$win_ver .
+  docker buildx build --provenance=false --sbom=false --platform windows/amd64 --output=$output -f Dockerfile.windows --build-arg=WINDOWS_VERSION=$win_ver -t ${repository}/csi-proxy:${version}-$win_ver .
 
   manifest_entries="$manifest_entries ${repository}/csi-proxy:${version}-$win_ver"
 done
