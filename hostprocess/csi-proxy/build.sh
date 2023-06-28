@@ -44,15 +44,3 @@ trap 'docker buildx rm img-builder' EXIT
 
 docker buildx build --platform windows/amd64 --output=$output -f Dockerfile.windows -t ${repository}/csi-proxy:${version} .
 
-manifest_entries="${repository}/csi-proxy:${version}"
-
-if [[ $push != "1" ]]; then
-  exit
-fi
-
-# Create manifest
-docker manifest create ${repository}/csi-proxy:${version} $manifest_entries
-
-docker manifest inspect $repository/csi-proxy:$version
-
-docker manifest push ${repository}/csi-proxy:${version}
