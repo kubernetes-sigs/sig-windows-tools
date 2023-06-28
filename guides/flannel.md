@@ -36,9 +36,9 @@ net-conf.json: |
     }
 ```
 
-> **Note:** The VNI must be set to 4096 and port 4789 for Flannel on Linux to interoperate with Flannel on Windows. See the [VXLAN documentation](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md#vxlan). for an explanation of these fields.
+> **Note** The VNI must be set to 4096 and port 4789 for Flannel on Linux to interoperate with Flannel on Windows. See the [VXLAN documentation](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md#vxlan). for an explanation of these fields.
 
-> **Note:** To use L2Bridge/Host-gateway mode instead change the value of `Type` to `"host-gw"` and omit `VNI` and `Port`.
+> **Note** To use L2Bridge/Host-gateway mode instead change the value of `Type` to `"host-gw"` and omit `VNI` and `Port`.
 
 3. Apply the Flannel manifest and validate
 
@@ -76,6 +76,15 @@ curl -L https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/mast
 >  **Note** If you are using another version of kubernetes on your Windows node, change v1.27.1 with your own version .
 > To find your version of kubernetes run the following command:
 > `kubeadm version`
+
+>  **Note** If you changed the`$CNIBinPath` or `$CNIConfigPath` optional parameters when running `Install-Containerd.ps1`,
+>  you will need to use those paths on `flannel-overlay.yml`. Pipe it through
+>  `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g' | sed 's/C:\\\\etc\\\\cni\\\\net.d/<your cni config path>/g'`
+>  before feeding it to `kubectl apply -f -`.
+
+>  **Note** If you changed the`$CNIBinPath` optional parameter when running `Install-Containerd.ps1`, you will need to
+>  use that path on `kube-proxy.yml`. Pipe it through `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g'` before
+>  feeding it to `kubectl apply -f -`.
 
 2. Apply kube-flannel-rbac.yml from sig-windows-tools/kubeadm/flannel
 Next you will need to apply the configuration that allows flannel to spawn pods and keep them running:

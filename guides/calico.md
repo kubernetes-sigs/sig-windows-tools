@@ -4,7 +4,7 @@ This should be followed after adding your [Windows node to the cluster with kube
 
 ## Configuring Calico with HostProcess containers
 
->  **Note:** All code snippets in Linux sections are to be run in a Linux environment on the Linux worker node.
+>  **Note** All code snippets in Linux sections are to be run in a Linux environment on the Linux worker node.
 
 ### Prepare Control Plane for Calico
 
@@ -24,7 +24,7 @@ The version of Calico will be set in the variable CALICO_VERSION (if another ver
 export CALICO_VERSION="v3.24.5"
 ```
 
-Create the tigera-operator.yaml and the custom-resources.yaml for Calico: 
+Create the tigera-operator.yaml and the custom-resources.yaml for Calico:
 ```bash
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/tigera-operator.yaml
 curl https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/manifests/custom-resources.yaml -O
@@ -32,7 +32,7 @@ curl https://raw.githubusercontent.com/projectcalico/calico/$CALICO_VERSION/mani
 # After the file has the correct CIDR, run this command:
 kubectl create -f custom-resources.yaml
 ```
->  **Note:** Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example, you may need to change the default IP pool CIDR to match your pod network CIDR.
+>  **Note** Before creating this manifest, read its contents and make sure its settings are correct for your environment. For example, you may need to change the default IP pool CIDR to match your pod network CIDR.
 
 Remove the taints on the master so that you can schedule pods on it.
 
@@ -61,10 +61,15 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-t
 >  **Note** To find your version of kubernetes run the following command:
 > `kubeadm version`
 
+>  **Note** If you changed the `$CNIBinPath` or `$CNIConfigPath` optional parameters when running `Install-Containerd.ps1`,
+>  you will need to use those paths on `calico.yml`. Pipe it through
+>  `| sed 's/C:\\\\opt\\\\cni\\\\bin/<your cni bin path>/g' | sed 's/C:\\\\etc\\\\cni\\\\net.d/<your cni config path>/g' | sed 's/opt\/cni\/bin/<your cni bin path>/g' | sed 's/etc\/cni\/net.d/<your cni config path>/g'`
+>  before feeding it to `kubectl apply -f -`. Mind the forward slash/backslash formats, manually editing the `calico.yml` file might be easier.
+
 The `$CALICO_VERSION` version in the above code section refers to the image of <a href="https://hub.docker.com/r/sigwindowstools/calico-node/tags" target="_blank">sigwindowstools/calico-node</a>, which may trail behind the versions released by Calico as these images are built and published on a best effort.
 
 ## Verifying your installation for Calico
->  **Note:** Remember to check if you have the calico cni installed on your Windows node ("C:\Program Files\containerd\cni\"). If you do not have it, follow this tutorial to install it: https://projectcalico.docs.tigera.io/getting-started/windows-calico/kubernetes/standard#install-calico-and-kubernetes-on-windows-nodes
+>  **Note** Remember to check if you have the calico cni installed on your Windows node ("C:\Program Files\containerd\cni\"). If you do not have it, follow this tutorial to install it: https://projectcalico.docs.tigera.io/getting-started/windows-calico/kubernetes/standard#install-calico-and-kubernetes-on-windows-nodes
 If you have trouble with modifying config.ps1, use this https://github.com/kubernetes-sigs/sig-windows-dev-tools/blob/master/forked/config.ps1
 
 You should now be able to view the Windows node in your cluster by running:
