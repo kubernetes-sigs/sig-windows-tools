@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Installs ContainerD on a Windows machines in preparation for joining the node to a Kubernetes cluster.
+Installs ContainerD on a Windows machine in preparation for joining the node to a Kubernetes cluster.
 
 .DESCRIPTION
 This script
@@ -13,7 +13,7 @@ This script
 ContainerD version to download and use.
 
 .PARAMETER skipHypervisorSupportCheck
-Skip the CPU check for Hypervisor support. You way wont be able to host Hyper-V isolated containers.
+Skip the CPU check for Hypervisor support. You wont be able to host Hyper-V isolated containers.
 Check https://github.com/kubernetes-sigs/sig-windows-tools/issues/296#issuecomment-1511695392 for more information.
 
 .PARAMETER CNIBinPath
