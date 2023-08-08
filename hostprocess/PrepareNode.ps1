@@ -64,6 +64,7 @@ $kubeletLogPath = "C:\var\log\kubelet"
 mkdir -force $kubeletLogPath
 mkdir -force C:\var\lib\kubelet\etc\kubernetes
 mkdir -force C:\etc\kubernetes\pki
+mkdir -Force c:\etc\kubernetes\manifests
 New-Item -path C:\var\lib\kubelet\etc\kubernetes\pki -type SymbolicLink -value C:\etc\kubernetes\pki\
 
 # dockershim related flags (--image-pull-progress-deadline=20m and --network-plugin=cni)  are removed in k8s v1.24
