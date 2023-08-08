@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Installs ContainerD on a Windows machines in preparation for joining the node to a Kubernetes cluster.
+Installs ContainerD on a Windows machine in preparation for joining the node to a Kubernetes cluster.
 
 .DESCRIPTION
 This script
@@ -12,11 +12,8 @@ This script
 .PARAMETER ContainerDVersion
 ContainerD version to download and use.
 
-.PARAMETER netAdapterName
-Name of network adapter to use when configuring basic nat network.
-
 .PARAMETER skipHypervisorSupportCheck
-Skip the CPU check for Hypervisor support. You way wont be able to host Hyper-V isolated containers.
+Skip the CPU check for Hypervisor support. You wont be able to host Hyper-V isolated containers.
 Check https://github.com/kubernetes-sigs/sig-windows-tools/issues/296#issuecomment-1511695392 for more information.
 
 .PARAMETER CNIBinPath
@@ -26,7 +23,7 @@ Path to configure ContainerD to look for CNI binaries. Optional, defaults to "c:
 Path to configure ContainerD to look for CNI config files. Optional, defaults to "c:/etc/cni/net.d".
 
 .EXAMPLE
-PS> .\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -netAdapterName Ethernet -skipHypervisorSupportCheck -CNIBinPath "c:/opt/cni/bin" -CNIConfigPath "c:/etc/cni/net.d"
+PS> .\Install-Containerd.ps1 -ContainerDVersion 1.7.1 -skipHypervisorSupportCheck -CNIBinPath "c:/opt/cni/bin" -CNIConfigPath "c:/etc/cni/net.d"
 
 #>
 
@@ -35,8 +32,6 @@ Param(
     [string] $ContainerDVersion = "1.7.1",
     [parameter(HelpMessage = "crictl version to use")]
     [string] $crictlVersion = "1.27.0",
-    [parameter(HelpMessage = "Name of network adapter to use when configuring basic nat network")]
-    [string] $netAdapterName = "Ethernet",
     [parameter(HelpMessage = "Skip the CPU check for Hypervisor support. Note that you will not be able to host Hyper-V isolated containers")]
     [switch] $skipHypervisorSupportCheck,
     [parameter(HelpMessage = "Path to configure ContainerD to look for CNI binaries")]
