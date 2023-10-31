@@ -18,7 +18,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.20.4
+        go-version: 1.21.3
     
     - name: Create drop folder
       run: mkdir -p $GITHUB_WORKSPACE/output/bin
@@ -37,7 +37,7 @@ jobs:
       env:
         GOOS: windows
         GOARCH: amd64
-        VERSION: v1.7.0+unknown
+        VERSION: v2.0.0+unknown
       run: |
         git clone https://github.com/containerd/containerd.git
         cd containerd
