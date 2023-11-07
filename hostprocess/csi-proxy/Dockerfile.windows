@@ -3,7 +3,7 @@ ARG WINDOWS_BASE_IMAGE=nanoserver
 ARG WINDOWS_VERSION=1809
 
 FROM --platform=linux/amd64 golang:1.20 as builder
-ARG CSI_PROXY_VERSION=v1.1.2
+ARG CSI_PROXY_VERSION=v1.1.3
 RUN git clone https://github.com/kubernetes-csi/csi-proxy.git /go/csi-proxy &&\
     cd /go/csi-proxy &&\
     git checkout tags/${CSI_PROXY_VERSION} &&\
