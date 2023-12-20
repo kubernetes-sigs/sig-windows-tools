@@ -42,10 +42,10 @@ curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools
 ```PowerShell
 # Install kubelet and kubeadm
 curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/PrepareNode.ps1
-.\PrepareNode.ps1 -KubernetesVersion v1.25.3
+.\PrepareNode.ps1 -KubernetesVersion 1.25.3
 ```
 
-> **Note** If you want to install another version of kubernetes, modify v1.25.3 with the version you want to install
+> **Note** If you want to install another version of kubernetes, modify 1.25.3 with the version you want to install
 
 3. Run `kubeadm` to join the node
 
