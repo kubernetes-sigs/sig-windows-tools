@@ -11,5 +11,5 @@ RUN git clone https://github.com/kubernetes-csi/csi-proxy.git /go/csi-proxy &&\
 
 FROM ${REGISTRY}/${WINDOWS_BASE_IMAGE}:${WINDOWS_VERSION}
 COPY --from=builder /go/csi-proxy/bin/csi-proxy.exe /csi-proxy.exe
-ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;"
+ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\wbem;"
 ENTRYPOINT ["csi-proxy.exe", "-v", "4"]
