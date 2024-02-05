@@ -1,6 +1,6 @@
-ARG REGISTRY=mcr.microsoft.com/windows
-ARG WINDOWS_BASE_IMAGE=nanoserver
-ARG WINDOWS_VERSION=1809
+ARG REGISTRY=mcr.microsoft.com/oss/kubernetes
+ARG WINDOWS_BASE_IMAGE=windows-host-process-containers-base-image
+ARG WINDOWS_VERSION=v1.0.0
 
 FROM --platform=linux/amd64 golang:1.20 as builder
 ARG CSI_PROXY_VERSION=v1.1.3
