@@ -1,15 +1,16 @@
 ARG REGISTRY=mcr.microsoft.com/oss/kubernetes
 ARG WINDOWS_BASE_IMAGE=windows-host-process-containers-base-image
-ARG WINDOWS_VERSION=v1.0.0
+ARG WINDOWS_BASE_IMAGE_VERSION=v1.0.0
+ARG BUILDER_BASE_IMAGE=golang
 
-FROM --platform=linux/amd64 golang:1.20 as builder
+FROM --platform=linux/amd64 ${BUILDER_BASE_IMAGE}:1.20 as builder
 ARG CSI_PROXY_VERSION=v1.1.3
 RUN git clone https://github.com/kubernetes-csi/csi-proxy.git /go/csi-proxy &&\
     cd /go/csi-proxy &&\
     git checkout tags/${CSI_PROXY_VERSION} &&\
     make build
 
-FROM ${REGISTRY}/${WINDOWS_BASE_IMAGE}:${WINDOWS_VERSION}
+FROM ${REGISTRY}/${WINDOWS_BASE_IMAGE}:${WINDOWS_BASE_IMAGE_VERSION}
 COPY --from=builder /go/csi-proxy/bin/csi-proxy.exe /csi-proxy.exe
 ENV PATH="C:\Windows\system32;C:\Windows;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\wbem;"
 ENTRYPOINT ["csi-proxy.exe", "-v", "4"]
