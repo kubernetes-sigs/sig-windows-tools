@@ -45,6 +45,7 @@ It should return the following.
 ```
 node/<your-hostname> untainted
 ```
+>  **Note** The server address populated in C:\etc\cni\net.d\calico-kubeconfig is retrieved from the control-plane-endpoint property in the cluster information. To ensure this value is set, on the control plane when running "kubeadm init" it can be included by setting the flag --control-plane-endpoint "IP:6443"
 
 ### Add Windows calico solution
 
