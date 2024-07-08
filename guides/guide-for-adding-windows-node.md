@@ -42,7 +42,7 @@ curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools
 ```PowerShell
 # Install kubelet and kubeadm
 curl.exe -LO https://raw.githubusercontent.com/kubernetes-sigs/sig-windows-tools/master/hostprocess/PrepareNode.ps1
-.\PrepareNode.ps1 -KubernetesVersion v1.25.3
+.\PrepareNode.ps1 -KubernetesVersion v1.29.6
 ```
 
 > **Note** If you want to install another version of kubernetes, modify v1.25.3 with the version you want to install
@@ -61,7 +61,8 @@ For more information about it : https://kubernetes.io/docs/tasks/tools/install-k
 
 Once you have a Linux-based Kubernetes control-plane node and a Windows node you are ready to choose a networking solution.
 
-This guide offers two choices:
+This guide offers three choices:
 
 - [Flannel](flannel.md)
 - [Calico](calico.md)
+- [Calico-Operator](calico_operator.md)
