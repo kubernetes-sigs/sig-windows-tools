@@ -1,5 +1,7 @@
 # Installing Flannel
 
+> :construction: :warning: This document is community maintained and hasn't had an active maintainer. The details may have changed and flannel version needs to be updated.
+
 This should be followed after adding your [Windows node to the cluster with kubeadm](guide-for-adding-windows-node.md#adding-windows-nodes).
 
 ## Configuring Flannel with HostProcess containers
