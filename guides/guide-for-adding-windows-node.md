@@ -63,6 +63,5 @@ Once you have a Linux-based Kubernetes control-plane node and a Windows node you
 
 This guide offers three choices:
 
-- [Flannel](flannel.md)
 - [Calico](calico.md)
 - [Calico-Operator](calico_operator.md)
