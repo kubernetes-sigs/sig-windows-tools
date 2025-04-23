@@ -18,6 +18,3 @@ jobs:
         echo "${{ secrets.DOCKER_SECRET }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
         pushd ./hostprocess/calico 
         ./build.sh -p ${{ github.event.inputs.proxy_version }}
-        popd
-        pushd ./hostprocess/flannel
-        ./build.sh -p ${{ github.event.inputs.proxy_version}}
