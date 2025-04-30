@@ -61,7 +61,5 @@ For more information about it : https://kubernetes.io/docs/tasks/tools/install-k
 
 Once you have a Linux-based Kubernetes control-plane node and a Windows node you are ready to choose a networking solution.
 
-This guide offers three choices:
+For Calico follow the instructions at https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/operator. Other networking solutions can be found at the CNI providers documentation.
 
-- [Calico](calico.md)
-- [Calico-Operator](calico_operator.md)
