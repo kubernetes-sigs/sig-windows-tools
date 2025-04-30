@@ -19,7 +19,7 @@ foreach ($tag in $json.tags) {
         continue
     }
 
-    foreach ($flavor in @("-calico-hostprocess", "-flannel-hostprocess")) {
+    foreach ($flavor in @("-calico-hostprocess")) {
         $image = "sigwindowstools/kube-proxy:$tag$flavor"
         Write-Output "Checking for image $image"
         docker manifest inspect $image | Out-Null
