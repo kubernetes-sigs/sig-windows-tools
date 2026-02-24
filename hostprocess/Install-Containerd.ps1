@@ -52,6 +52,120 @@ function DownloadFile($destination, $source) {
     }
 }
 
+function Find-TomlSectionFromRegex {
+    <#
+    .SYNOPSIS
+        Finds the exact TOML section header string that matches a given Regular Expression.
+    .OUTPUTS
+        System.String containing the exact trimmed section header, or $null if not found.
+    #>
+    param (
+        [Parameter(Mandatory=$true)][string]$FilePath,
+        [Parameter(Mandatory=$true)][string]$Regex
+    )
+
+    foreach ($line in (Get-Content -Path $FilePath)) {
+        if ($line -match $Regex) {
+            return $line.Trim()
+        }
+    }
+
+    return $null
+}
+
+function Find-TomlKeyInSection {
+    <#
+    .SYNOPSIS
+        Checks if a specific key exists within a specific TOML section.
+    #>
+    param (
+        [Parameter(Mandatory=$true)][string]$FilePath,
+        [Parameter(Mandatory=$true)][string]$TargetSection,
+        [Parameter(Mandatory=$true)][string]$Key
+    )
+
+    $lines = Get-Content -Path $FilePath
+    $inTargetSection = $false
+    $sectionWasFound = $false
+
+    foreach ($line in $lines) {
+        $trimmed = $line.Trim()
+
+        # Track if we are inside the target section
+        if ($trimmed.StartsWith("[") -and $trimmed.EndsWith("]")) {
+            $inTargetSection = ($trimmed -eq $TargetSection)
+            if ($inTargetSection) {
+                $sectionWasFound = $true
+            }
+        }
+        # If inside the section, check if the key matches
+        if ($inTargetSection -and $trimmed -match "^\s*$Key\s*=") {
+                return $true
+        }
+    }
+
+    if (!$sectionWasFound) {
+        Write-Error "Section $TargetSection not found in $FilePath"
+    }
+
+    return $false
+}
+
+function Update-TomlKeyInSection {
+    <#
+    .SYNOPSIS
+        Updates a specific key's value only within a specific TOML section.
+    #>
+    param (
+        [Parameter(Mandatory=$true)][string]$FilePath,
+        [Parameter(Mandatory=$true)][string]$TargetSection,
+        [Parameter(Mandatory=$true)][string]$Key,
+        [Parameter(Mandatory=$true)][string]$Value
+    )
+
+    $lines = Get-Content -Path $FilePath
+    $inTargetSection = $false
+    $newContent = @()
+    $sectionWasFound = $false
+    $keyWasUpdated = $false
+
+    foreach ($line in $lines) {
+        $trimmed = $line.Trim()
+
+        if ($trimmed.StartsWith("[") -and $trimmed.EndsWith("]")) {
+            $inTargetSection = ($trimmed -eq $TargetSection)
+            if ($inTargetSection) {
+                $sectionWasFound = $true
+            }
+            $newContent += $line
+            continue
+        }
+
+        if ($inTargetSection -and $trimmed -match "^\s*$Key\s*=") {
+            # Capture original indentation
+            $indent = ""
+            if ($line -match "^(\s+)") { $indent = $matches[1] }
+
+            # Replace the line (Note: $Value is inserted exactly as provided)
+            $newContent += "${indent}$Key = $Value"
+            $keyWasUpdated = $true
+        }
+        else {
+            $newContent += $line
+        }
+    }
+
+    $newContent | Set-Content -Path $FilePath -Force
+
+    if (!$sectionWasFound) {
+        Write-Error "Section $TargetSection not found in $FilePath"
+    }
+
+    if (!$keyWasUpdated) {
+        Write-Error "Failed to update $Key with value '$Value' in section $TargetSection of $FilePath"
+    }
+}
+
 $rebootNeeded = $false
 
 $windowsFeatures = @("Containers")
@@ -115,10 +229,38 @@ $env:Path += ";$global:ContainerDPath"
 [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
 containerd.exe config default | Out-File "$global:ContainerDPath\config.toml" -Encoding ascii
 #config file fixups
-$config = Get-Content "$global:ContainerDPath\config.toml"
-$config = $config -replace "bin_dir = (.)*$", "bin_dir = `"$CNIBinPath`""
-$config = $config -replace "conf_dir = (.)*$", "conf_dir = `"$CNIConfigPath`""
-$config | Set-Content "$global:ContainerDPath\config.toml" -Force
+$configFile = "$global:ContainerDPath\config.toml"
+
+# Regex for either v1.x or v2.x CNI section (accommodates single or double quotes)
+$CNISectionRegex = '^\s*\[plugins\.[''"]io\.containerd\.(grpc\.v1\.cri|cri\.v1\.runtime)[''"]\.cni\]\s*$'
+$CNISection = Find-TomlSectionFromRegex -FilePath $configFile -Regex $CNISectionRegex
+if ($null -eq $CNISection) {
+    Write-Error "Could not find a recognized CNI section in $configFile"
+    exit 1
+}
+Write-Output "Configuring ContainerD CNI section: $CNISection"
+
+# Check for bin_dirs key and update it if present, otherwise update bin_dir key
+$hasBinDirs = Find-TomlKeyInSection -FilePath $configFile -TargetSection $CNISection -Key "bin_dirs"
+if ($hasBinDirs) {
+    # bin_dirs is a list, format the value as a TOML array
+    Update-TomlKeyInSection -FilePath $configFile `
+                   -TargetSection $CNISection `
+                   -Key "bin_dirs" `
+                   -Value "['$CNIBinPath']"
+} else {
+    # bin_dir is a string, format it as a literal TOML string
+    Update-TomlKeyInSection -FilePath $configFile `
+                   -TargetSection $CNISection `
+                   -Key "bin_dir" `
+                   -Value "'$CNIBinPath'"
+}
+
+# Always update conf_dir key (using single quotes as it is a literal TOML string)
+Update-TomlKeyInSection -FilePath $configFile `
+               -TargetSection $CNISection `
+               -Key "conf_dir" `
+               -Value "'$CNIConfigPath'"
 
 mkdir -Force $CNIBinPath | Out-Null
 mkdir -Force $CNIConfigPath | Out-Null
