@@ -2,8 +2,12 @@
 
 approvers:
   - aravindhp
+  - marosset
+  - zylxjtu
+
+emeritus_approvers:
   - jsturtevant
   - jayunit100
-  - marosset
+
 labels:
   - tide/merge-method-squash
