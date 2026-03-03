@@ -1,0 +1,92 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Sync Kube-Proxy images
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Every day at 00:00 UTC
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'Repository to push the image to (ex: docker.io/sigwindowstools)'
+        required: false
+        default: 'docker.io/sigwindowstools'
+
+env:
+  REPOSITORY: ${{ github.event.inputs.repository || 'docker.io/sigwindowstools' }}
+
+permissions:
+  actions: write
+
+jobs:
+  sync:
+    name: Find and sync missing kube-proxy images
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Login to DockerHub
+      if: startsWith(env.REPOSITORY, 'docker.io')
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_SECRET }}
+
+    - name: Find and trigger builds for missing images
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        REPOSITORY="${{ env.REPOSITORY }}"
+        MIN_VERSION="1.33"
+        SUFFIX="-calico-hostprocess"
+        MISSING=()
+
+        # Fetch all kube-proxy tags from registry.k8s.io
+        echo "Fetching kube-proxy tags from registry.k8s.io..."
+        TAGS=$(curl -sL "https://registry.k8s.io/v2/kube-proxy/tags/list" | jq -r '.tags[]')
+
+        for TAG in $TAGS; do
+          # Must start with 'v'
+          [[ "$TAG" != v* ]] && continue
+
+          # Skip pre-release tags (contain a hyphen after stripping 'v')
+          VER="${TAG#v}"
+          [[ "$VER" == *-* ]] && continue
+
+          # Version comparison: must be >= MIN_VERSION
+          LOWEST=$(printf '%s\n' "$MIN_VERSION" "$VER" | sort -V | head -n1)
+          [[ "$LOWEST" != "$MIN_VERSION" ]] && continue
+
+          IMAGE="${REPOSITORY}/kube-proxy:${TAG}${SUFFIX}"
+          echo "Checking ${IMAGE} ..."
+
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+            echo "  exists"
+          else
+            echo "  missing"
+            MISSING+=("$TAG")
+          fi
+        done
+
+        echo ""
+        echo "=== Summary ==="
+        if [[ ${#MISSING[@]} -eq 0 ]]; then
+          echo "All kube-proxy images are up to date."
+          exit 0
+        fi
+
+        echo "Missing images (${#MISSING[@]}):"
+        for TAG in "${MISSING[@]}"; do
+          echo "  - ${REPOSITORY}/kube-proxy:${TAG}${SUFFIX}"
+        done
+
+        echo ""
+        echo "Triggering builds..."
+        for TAG in "${MISSING[@]}"; do
+          echo "  Dispatching build for ${TAG} -> ${REPOSITORY} ..."
+          gh workflow run build-kube-proxy-images.yml \
+            -f proxy_version="$TAG" \
+            -f repository="$REPOSITORY"
+        done
