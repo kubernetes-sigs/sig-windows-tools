@@ -21,13 +21,13 @@ jobs:
     env:
       image: ghcr.io/kubernetes-sigs/sig-windows/eventflow-logger
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: set release image
         run: |
           $version=Get-Content "hostprocess\eventflow-logger\VERSION"
           echo "RELEASE_IMAGE=${{ env.image }}:$version" >> $env:GITHUB_ENV
       - name: login to GitHub container registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
