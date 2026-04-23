@@ -51,11 +51,8 @@ jobs:
           # Must start with 'v'
           [[ "$TAG" != v* ]] && continue
 
-          # Skip pre-release tags (contain a hyphen after stripping 'v')
-          VER="${TAG#v}"
-          [[ "$VER" == *-* ]] && continue
-
           # Version comparison: must be >= MIN_VERSION
+          VER="${TAG#v}"
           LOWEST=$(printf '%s\n' "$MIN_VERSION" "$VER" | sort -V | head -n1)
           [[ "$LOWEST" != "$MIN_VERSION" ]] && continue
 

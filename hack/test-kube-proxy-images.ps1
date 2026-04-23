@@ -12,9 +12,6 @@ foreach ($tag in $json.tags) {
     if (-not($tag.StartsWith("v"))) {
         continue
     }
-    if ($tag.Contains("-")) {
-        continue
-    }
     if ([Version]($tag.TrimStart('v')) -lt [Version]($minK8sVersion.TrimStart('v'))) {
         continue
     }
