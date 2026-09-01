@@ -5,24 +5,25 @@ set -o pipefail
 
 ## DESCRIPTION:
 ##
-## This script queries all repos in a given github org and adds and issues 
-## with label 'sig/windows' to a specified project board.
+## This script queries all repos in the configured source organizations and adds
+## issues and pull requests with label 'sig/windows' to specified project boards.
 ##
 ## REREQS:
 ##
-## This script assumes there is a github PAT in the GITHUB_TOKEN env var
-## that was created with the following permissions:
-##   - repo (all)
-##   - read:org
-##   - user (all)
-##   - read:enterprise
-##   - project (all)
+## This script assumes GITHUB_TOKEN can access the configured organizations.
+## A GitHub App should be installed in each source organization, with
+## Organization projects: read/write in PROJECT_ORG and Issues / Pull requests:
+## read for scanned repositories. A classic PAT with equivalent access also works.
 
-GH_ORG=${GH_ORG:-'kubernetes'}
+PROJECT_ORG=${PROJECT_ORG:-'kubernetes'}
+SOURCE_ORGS=${SOURCE_ORGS:-'kubernetes kubernetes-sigs'}
 ISSUES_PROJECT_NUMBER=${ISSUES_PROJECT_NUMBER:-'82'}
 PRS_PROJECT_NUMBER=${PRS_PROJECT_NUMBER:-'99'}
 
-echo "GH_ORG=${GH_ORG}"
+read -r -a source_orgs <<< "$SOURCE_ORGS"
+
+echo "PROJECT_ORG=${PROJECT_ORG}"
+echo "SOURCE_ORGS=${SOURCE_ORGS}"
 
 function get_project_id_from_number() {
     project_id="$(gh api graphql -f query='
@@ -32,7 +33,7 @@ function get_project_id_from_number() {
                 id
             }
         }
-    }' -f org="${GH_ORG}" -F number="$1" --jq '.data.organization.projectV2.id')"
+    }' -f org="${PROJECT_ORG}" -F number="$1" --jq '.data.organization.projectV2.id')"
     echo "$project_id"
 }
 
@@ -42,8 +43,10 @@ echo "project id for issues (number $ISSUES_PROJECT_NUMBER): ${issues_project_id
 prs_project_id=$( get_project_id_from_number "$PRS_PROJECT_NUMBER" )
 echo "project id for prs (number $PRS_PROJECT_NUMBER): ${prs_project_id}"
 
-# Get list of repos in the org
-repos_json="$(gh api graphql --paginate -f query='
+# Get list of repos and matching items from each source organization.
+for source_org in "${source_orgs[@]}"
+do
+    repos_json="$(gh api graphql --paginate -f query='
     query($org: String!, $endCursor: String) {
         viewer {
             organization(login: $org) {
@@ -58,16 +61,16 @@ repos_json="$(gh api graphql --paginate -f query='
                 }
             }
         }
-    }' -f org="${GH_ORG}")"
+    }' -f org="${source_org}")"
 
-repos="$(jq ".data.viewer.organization.repositories.nodes[].name" <<< "$repos_json" |  tr -d '"' )"
+    repos="$(jq ".data.viewer.organization.repositories.nodes[].name" <<< "$repos_json" |  tr -d '"' )"
 
-for repo in $repos
-do
-    echo "Looking for issues in ${GH_ORG}/${repo}"
+    for repo in $repos
+    do
+        echo "Looking for issues in ${source_org}/${repo}"
 
-    # TODO: paginate this query
-    issues_json="$(gh api graphql -f query='
+        # TODO: paginate this query
+        issues_json="$(gh api graphql -f query='
         query($org: String!, $repo: String!) {
             repository(owner: $org, name: $repo) {
                 issues(last: 100, labels: ["sig/Windows"], states: OPEN) {
@@ -79,7 +82,7 @@ do
                     }
                 }
             }
-        }' -f org="${GH_ORG}" -f repo="${repo}")"
+        }' -f org="${source_org}" -f repo="${repo}")"
 
     num_issues=$(jq ".data.repository.issues.nodes | length" <<< "$issues_json")
     echo "  found ${num_issues} in repo"
@@ -104,7 +107,7 @@ do
         done
     fi
 
-    echo "Looking for PRs in ${GH_ORG}/${repo}"
+    echo "Looking for PRs in ${source_org}/${repo}"
         # TODO: paginate this query
     prs_json="$(gh api graphql -f query='
         query($org: String!, $repo: String!) {
@@ -118,7 +121,7 @@ do
                     }
                 }
             }
-        }' -f org="${GH_ORG}" -f repo="${repo}")"
+        }' -f org="${source_org}" -f repo="${repo}")"
 
     num_prs=$(jq ".data.repository.pullRequests.nodes | length" <<< "$prs_json")
     echo "  found ${num_prs} in repo"
@@ -141,5 +144,6 @@ do
                     }
                 }' -f project="${prs_project_id}" -f pr="${pr_id}" --jq .data.addProjectV2ItemById.item.id > /dev/null
         done
-    fi
+        fi
+    done
 done
