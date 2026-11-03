@@ -36,10 +36,13 @@ Write-Host "HNS network $NetworkName found."
 $kubeProxyVer = $(Invoke-Expression "$kproxy --version")
 echo "kubeproxy version $kubeProxyVer"
 $kubeProxyGE114 = $false
-if ($kubeProxyVer -match "v([0-9])\.([0-9]+)") {
+$kubeProxyGE138 = $false
+if ($kubeProxyVer -match "v([0-9]+)\.([0-9]+)") {
     $major = $Matches.1 -as [int]
     $minor = $Matches.2 -as [int]
-    $kubeProxyGE114 = ($major -GT 1 -OR $major -EQ 1 -AND $minor -GE 14)
+    $kubeProxyGE114 = ($major -GT 1 -OR ($major -EQ 1 -AND $minor -GE 14))
+    # WinDSR and WinOverlay feature gates were removed in v1.38.
+    $kubeProxyGE138 = ($major -GT 1 -OR ($major -EQ 1 -AND $minor -GE 38))
 }
 
 # Determine the windows version and build number for DSR support.
@@ -63,8 +66,13 @@ $argList = @(`
     "--proxy-mode=kernelspace",`
     "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig-win.conf"`
 )
+$extraFeatures = @()
+
 if ($kubeProxyGE114 -And $PlatformSupportDSR) {
     Write-Host "Requires 2019 with KB4580390 (Oct 2020)"
+    if (-NOT $kubeProxyGE138) {
+        $extraFeatures += "WinDSR=true"
+    }
     $argList += "--enable-dsr=true"
 } else {
     Write-Host "DSR feature is not supported."
@@ -83,6 +91,15 @@ if ($network.Type -EQ "Overlay") {
     Write-Host "Host endpoint found."
     $sourceVip = (Get-HnsEndpoint | ? Name -EQ "Calico_ep").IpAddress
     $argList += "--source-vip=$sourceVip"
+    if (-NOT $kubeProxyGE138) {
+        $extraFeatures += "WinOverlay=true"
+    }
+}
+
+if ($extraFeatures.Length -GT 0) {
+    $featuresStr = $extraFeatures -join ","
+    $argList += "--feature-gates=$featuresStr"
+    Write-Host "Enabling feature gates: $extraFeatures."
 }
 
 # kube-proxy doesn't handle resync if there are pre-exisitng policies, clean them
