@@ -63,11 +63,8 @@ $argList = @(`
     "--proxy-mode=kernelspace",`
     "--kubeconfig=$env:CONTAINER_SANDBOX_MOUNT_POINT/var/lib/kube-proxy/kubeconfig-win.conf"`
 )
-$extraFeatures = @()
-
 if ($kubeProxyGE114 -And $PlatformSupportDSR) {
     Write-Host "Requires 2019 with KB4580390 (Oct 2020)"
-    $extraFeatures += "WinDSR=true"
     $argList += "--enable-dsr=true"
 } else {
     Write-Host "DSR feature is not supported."
@@ -86,13 +83,6 @@ if ($network.Type -EQ "Overlay") {
     Write-Host "Host endpoint found."
     $sourceVip = (Get-HnsEndpoint | ? Name -EQ "Calico_ep").IpAddress
     $argList += "--source-vip=$sourceVip"
-    $extraFeatures += "WinOverlay=true"
-}
-
-if ($extraFeatures.Length -GT 0) {
-    $featuresStr = $extraFeatures -join ","
-    $argList += "--feature-gates=$featuresStr"
-    Write-Host "Enabling feature gates: $extraFeatures."
 }
 
 # kube-proxy doesn't handle resync if there are pre-exisitng policies, clean them
